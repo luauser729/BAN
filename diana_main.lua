@@ -686,150 +686,13 @@ if success and code then
             end
         end)
     end
-    Tab2:AddSwitch("ESP透视", function(state) ToggleESP(state) end)    local Tab3 = Window:CreateTab("飞行")
+    Tab2:AddSwitch("ESP透视", function(state) ToggleESP(state) end)
+
+    local Tab3 = Window:CreateTab("飞行")
     Tab3:AddSwitch("恐飞行",function(state) ToggleKongFly(state) end)
     Tab3:AddSwitch("柳叶飞行",function(state)
         if state then
             loadstring(game:HttpGet("https://raw.githubusercontent.com/krlpl/er/refs/heads/main/GB%C3%BD%C3%BD%C3%BD%C3%BD-obfuscated.lua"))()
-        end
-    end)
-    Tab3:AddSwitch("坐标飞",function(state)
-        if state then
-            local TweenService = game:GetService("TweenService")
-            local camera = workspace.CurrentCamera
-            local pgui = lp:WaitForChild("PlayerGui")
-            local mt = getrawmetatable(game)
-            local old = mt.__namecall
-            setreadonly(mt, false)
-            mt.__namecall = newcclosure(function(self, ...)
-                if getnamecallmethod() == "FireServer" and tostring(self) == "ForceSelfDamage" then return nil end
-                return old(self, ...)
-            end)
-            setreadonly(mt, true)
-            if pgui:FindFirstChild("QiuRong_Silk_V15") then pgui.QiuRong_Silk_V15:Destroy() end
-            local ScreenGui = Instance.new("ScreenGui", pgui)
-            ScreenGui.Name = "QiuRong_Silk_V15"
-            ScreenGui.ResetOnSpawn = false
-            local MainFrame = Instance.new("Frame", ScreenGui)
-            MainFrame.Size = UDim2.new(0, 180, 0, 140)
-            MainFrame.Position = UDim2.new(0.5, -90, 0.4, 0)
-            MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-            MainFrame.BorderSizePixel = 0
-            MainFrame.ClipsDescendants = true
-            Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 15)
-            local Title = Instance.new("TextLabel", MainFrame)
-            Title.Size = UDim2.new(1, 0, 0, 30)
-            Title.BackgroundTransparency = 1
-            Title.Text = "官方"
-            Title.TextColor3 = Color3.new(0.8, 0.8, 0.8)
-            Title.TextSize = 12
-            local SpeedInput = Instance.new("TextBox", MainFrame)
-            SpeedInput.Size = UDim2.new(0, 140, 0, 30); SpeedInput.Position = UDim2.new(0.5, -70, 0, 40)
-            SpeedInput.BackgroundColor3 = Color3.fromRGB(40, 40, 40); SpeedInput.Text = "35"
-            SpeedInput.TextColor3 = Color3.new(1, 1, 1); Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 8)
-            local Toggle = Instance.new("TextButton", MainFrame)
-            Toggle.Size = UDim2.new(0, 140, 0, 40); Toggle.Position = UDim2.new(0.5, -70, 0, 85)
-            Toggle.BackgroundColor3 = Color3.fromRGB(60, 60, 60); Toggle.Text = "纯坐标飞行: OFF"
-            Toggle.TextColor3 = Color3.new(1, 1, 1); Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0, 10)
-            local dragging, dragInput, dragStart, startPos
-            MainFrame.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    dragging = true
-                    dragStart = input.Position
-                    startPos = MainFrame.Position
-                    input.Changed:Connect(function()
-                        if input.UserInputState == Enum.UserInputState.End then dragging = false end
-                    end)
-                end
-            end)
-            MainFrame.InputChanged:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-                    dragInput = input
-                end
-            end)
-            UserInputService.InputChanged:Connect(function(input)
-                if input == dragInput and dragging then
-                    local delta = input.Position - dragStart
-                    MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-                end
-            end)
-            local isFlying = false
-            local flySpeed = 35
-            local animCache
-            local ControlModule = require(lp.PlayerScripts:WaitForChild("PlayerModule")):GetControls()
-            local flightConnection = nil
-            local lastUpdateTime = tick()
-            local function startFly()
-                local char = lp.Character or lp.CharacterAdded:Wait()
-                local hrp = char:WaitForChild("HumanoidRootPart")
-                local hum = char:WaitForChild("Humanoid")
-                local animate = char:FindFirstChild("Animate")
-                if animate then animCache = animate; animate.Parent = nil end
-                hum.AutoRotate = false
-                if flightConnection then flightConnection:Disconnect() end
-                lastUpdateTime = tick()
-                flightConnection = RunService.Heartbeat:Connect(function()
-                    if not isFlying or not char.Parent then
-                        if flightConnection then flightConnection:Disconnect() end
-                        return
-                    end
-                    local now = tick()
-                    local dt = now - lastUpdateTime
-                    lastUpdateTime = now
-                    local moveVec = ControlModule:GetMoveVector()
-                    local camCF = camera.CFrame
-                    local moveDir = (camCF.LookVector * -moveVec.Z) + (camCF.RightVector * moveVec.X) + (Vector3.new(0, moveVec.Y, 0))
-                    if moveVec.Magnitude > 0 then
-                        local newPos = hrp.Position + moveDir.Unit * (flySpeed * dt)
-                        hrp.CFrame = CFrame.new(newPos, newPos + camCF.LookVector)
-                    else
-                        hrp.CFrame = CFrame.lookAlong(hrp.Position, Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z))
-                    end
-                    hrp.AssemblyLinearVelocity = Vector3.new()
-                end)
-            end
-            Toggle.MouseButton1Click:Connect(function()
-                isFlying = not isFlying
-                flySpeed = tonumber(SpeedInput.Text) or 35
-                Toggle.Text = isFlying and "已开启 - 运行中" or "纯坐标飞行: OFF"
-                TweenService:Create(Toggle, TweenInfo.new(0.3), {BackgroundColor3 = isFlying and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(60, 60, 60)}):Play()
-                if isFlying then startFly() else
-                    if flightConnection then flightConnection:Disconnect() flightConnection = nil end
-                    local char = lp.Character
-                    if char then
-                        local hum = char:FindFirstChildOfClass("Humanoid")
-                        if hum then hum.AutoRotate = true end
-                        local animate = char:FindFirstChild("Animate")
-                        if animCache and not animate then animCache.Parent = char animCache = nil end
-                    end
-                end
-            end)
-            local function topBtn(t, x, c, f)
-                local b = Instance.new("TextButton", MainFrame)
-                b.Size = UDim2.new(0, 25, 0, 25); b.Position = UDim2.new(1, x, 0, 5); b.Text = t
-                b.BackgroundColor3 = c; b.TextColor3 = Color3.new(1, 1, 1); Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
-                b.MouseButton1Click:Connect(f)
-            end
-            topBtn("×", -30, Color3.fromRGB(150, 50, 50), function()
-                isFlying = false
-                if flightConnection then flightConnection:Disconnect() end
-                local char = lp.Character
-                if char then
-                    local hum = char:FindFirstChildOfClass("Humanoid")
-                    if hum then hum.AutoRotate = true end
-                    local animate = char:FindFirstChild("Animate")
-                    if animCache and not animate then animCache.Parent = char end
-                end
-                ScreenGui:Destroy()
-            end)
-            topBtn("-", -60, Color3.fromRGB(70, 70, 70), function()
-                local isCollapsed = MainFrame.Size.Y.Offset < 140
-                local targetH = isCollapsed and 140 or 35
-                TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {Size = UDim2.new(0, 180, 0, targetH)}):Play()
-                Toggle.Visible, SpeedInput.Visible = isCollapsed, isCollapsed
-            end)
-            MainFrame.Size = UDim2.new(0, 0, 0, 0)
-            MainFrame:TweenSize(UDim2.new(0, 180, 0, 140), "Out", "Back", 0.5)
         end
     end)
 
@@ -954,7 +817,6 @@ if success and code then
         if state then AimbotTargetPart = "UpperTorso" end
     end)
 
-    -- ==================== 范围 Tab5 ====================
     local Tab5 = Window:CreateTab("范围")
     local HitboxEnabled = false
     local HitboxSize = 10
@@ -1049,9 +911,7 @@ if success and code then
 
     Tab5:AddSlider("颜色深度(越大越不透明)", 0, 100, 50, function(val)
         hitboxColorDepth = val / 100
-    end)
-
-    -- ==================== FE Tab6 ====================
+    end)    -- ==================== FE Tab6 ====================
     local Tab6 = Window:CreateTab("FE")
 
     Tab6:AddSwitch("机器人跳舞", function(state)
@@ -1476,22 +1336,723 @@ if success and code then
     local Tab9 = Window:CreateTab("甩飞")
 
     Tab9:AddButton("🚀 启动静默甩飞", function()
-        local FLING_URL = "https://raw.githubusercontent.com/sdxs221/sd/main/fling.lua"
-        local ok, src = pcall(function() return game:HttpGet(FLING_URL) end)
-        if ok and src then
-            local fn = loadstring(src)
-            if fn then
-                local ok2, err = pcall(fn)
-                if not ok2 then
-                    createNotifyText("❌ 甩飞脚本执行出错："..tostring(err))
-                else
-                    createNotifyText("✅ 静默甩飞已启动")
-                end
-            else
-                createNotifyText("❌ 甩飞脚本加载失败")
-            end
-        else
-            createNotifyText("❌ 无法下载甩飞脚本，请检查网络")
+        local SF_Players = game:GetService("Players")
+        local SF_RunService = game:GetService("RunService")
+        local SF_LocalPlayer = SF_Players.LocalPlayer
+        local SF_TweenService = game:GetService("TweenService")
+
+        local sf_isSilentFlyEnabled = false
+        local sf_isUIHidden = false
+        local sf_isPlayerListVisible = false
+        local sf_isLoopFlyEnabled = false
+        local sf_flyConnections = {}
+        local sf_loopFlyConnections = {}
+        local sf_toggleBtn = nil
+        local sf_mainFrame = nil
+        local sf_borderStroke = nil
+        local sf_hideButton = nil
+        local sf_playerCountLabel = nil
+        local sf_playerListFrame = nil
+        local sf_playerListScrolling = nil
+        local sf_playerButtons = {}
+        local sf_selectedPlayer = nil
+        local sf_listToggleBtn = nil
+        local sf_teleportBtn = nil
+        local sf_teleportFlyBtn = nil
+        local sf_loopFlyBtn = nil
+        local sf_statusLabel = nil
+        local sf_isTeleportFlying = false
+        local sf_isLoopFlying = false
+        local sf_originalPosition = nil
+        local sf_wasSilentFlyEnabledBefore = false
+        local sf_loopTargetPlayer = nil
+        local sf_loopStartTime = 0
+
+        local function SafeGetCharacter(player)
+            if not player then return nil end
+            local char = player.Character
+            if not char or not char.Parent then return nil end
+            return char
         end
+        local function SafeGetHumanoid(char)
+            if not char then return nil end
+            return char:FindFirstChildOfClass("Humanoid")
+        end
+        local function SafeGetHRP(char)
+            if not char then return nil end
+            return char:FindFirstChild("HumanoidRootPart")
+        end
+
+        local function UpdateButton()
+            if not sf_toggleBtn then return end
+            if sf_isSilentFlyEnabled then
+                sf_toggleBtn.Text = "🔇 静默甩飞 ON"
+                sf_toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+            else
+                sf_toggleBtn.Text = "🔇 静默甩飞 OFF"
+                sf_toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+            end
+        end
+
+        local function UpdateHideButton()
+            if not sf_hideButton then return end
+            if sf_isUIHidden then
+                sf_hideButton.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+            else
+                sf_hideButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+            end
+        end
+
+        local function UpdateLoopFlyButton()
+            if not sf_loopFlyBtn then return end
+            if sf_isLoopFlyEnabled then
+                sf_loopFlyBtn.Text = "🔄 循环甩飞 ON"
+                sf_loopFlyBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+            else
+                sf_loopFlyBtn.Text = "🔄 循环甩飞 OFF"
+                sf_loopFlyBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+            end
+        end
+
+        local function ToggleUIHide(state)
+            sf_isUIHidden = state
+            if sf_mainFrame then
+                sf_mainFrame.Visible = not sf_isUIHidden
+            end
+            UpdateHideButton()
+        end
+
+        local function UpdateStatus(text, isSuccess)
+            if not sf_statusLabel then return end
+            sf_statusLabel.Text = text
+            if isSuccess == nil then
+                sf_statusLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+                return
+            end
+            if isSuccess then
+                sf_statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+            else
+                sf_statusLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+            end
+        end
+
+        local function IsPlayerFlying(player)
+            if not player then return false end
+            local char = SafeGetCharacter(player)
+            if not char then return false end
+            local hrp = SafeGetHRP(char)
+            if not hrp then return false end
+            local hum = SafeGetHumanoid(char)
+            if not hum then return false end
+            local speed = hrp.AssemblyLinearVelocity.Magnitude
+            if speed > 30 then return true end
+            local state = hum:GetState()
+            if state == Enum.HumanoidStateType.Physics or
+               state == Enum.HumanoidStateType.FallingDown or
+               state == Enum.HumanoidStateType.Ragdoll then
+                return true
+            end
+            return false
+        end
+
+        local function ToggleSilentFly(state)
+            sf_isSilentFlyEnabled = state
+            for _, conn in pairs(sf_flyConnections) do
+                if conn then pcall(function() conn:Disconnect() end) end
+            end
+            sf_flyConnections = {}
+
+            if sf_isSilentFlyEnabled then
+                local stepConn = SF_RunService.Stepped:Connect(function()
+                    if not sf_isSilentFlyEnabled then return end
+                    local char = SafeGetCharacter(SF_LocalPlayer)
+                    local hum = SafeGetHumanoid(char)
+                    local hrp = SafeGetHRP(char)
+                    if hum and hrp then
+                        pcall(function()
+                            hum.PlatformStand = false
+                            hum.Sit = false
+                            hum.AutoRotate = true
+                            local state = hum:GetState()
+                            if state == Enum.HumanoidStateType.Physics or
+                               state == Enum.HumanoidStateType.FallingDown or
+                               state == Enum.HumanoidStateType.Ragdoll then
+                                hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+                            end
+                        end)
+                    end
+                    if sf_isSilentFlyEnabled then
+                        for _, otherPlayer in pairs(SF_Players:GetPlayers()) do
+                            if otherPlayer ~= SF_LocalPlayer then
+                                local otherChar = SafeGetCharacter(otherPlayer)
+                                if otherChar then
+                                    for _, part in pairs(otherChar:GetDescendants()) do
+                                        if part:IsA("BasePart") then
+                                            pcall(function() part.CanCollide = false end)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end)
+                table.insert(sf_flyConnections, stepConn)
+
+                local heartbeatConn = SF_RunService.Heartbeat:Connect(function()
+                    if not sf_isSilentFlyEnabled then return end
+                    local char = SafeGetCharacter(SF_LocalPlayer)
+                    local hrp = SafeGetHRP(char)
+                    local hum = SafeGetHumanoid(char)
+                    if hum and hrp then
+                        pcall(function()
+                            local currentVel = hrp.AssemblyLinearVelocity
+                            hum:ChangeState(Enum.HumanoidStateType.Running)
+                            local safeY = currentVel.Y
+                            if safeY > 40 then safeY = 40 end
+                            if safeY < -40 then safeY = -40 end
+                            hrp.AssemblyAngularVelocity = Vector3.new(50000, 50000, 50000)
+                            hrp.AssemblyLinearVelocity = Vector3.new(
+                                currentVel.X * 1.1,
+                                safeY,
+                                currentVel.Z * 1.1
+                            )
+                            SF_RunService.RenderStepped:Wait()
+                            if hrp and hrp.Parent then
+                                hrp.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                            end
+                        end)
+                    end
+                end)
+                table.insert(sf_flyConnections, heartbeatConn)
+            end
+            UpdateButton()
+        end
+
+        local function EnableAntiFly()
+            SF_RunService.Stepped:Connect(function()
+                local char = SafeGetCharacter(SF_LocalPlayer)
+                local hum = SafeGetHumanoid(char)
+                local hrp = SafeGetHRP(char)
+                if hum and hrp then
+                    pcall(function()
+                        hum.PlatformStand = false
+                        hum.Sit = false
+                        hum.AutoRotate = true
+                        local state = hum:GetState()
+                        if state == Enum.HumanoidStateType.Physics or
+                           state == Enum.HumanoidStateType.FallingDown or
+                           state == Enum.HumanoidStateType.Ragdoll then
+                            hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+                        end
+                    end)
+                end
+            end)
+        end
+
+        local function StartRainbowBorder()
+            if not sf_borderStroke then return end
+            task.spawn(function()
+                local hue = 0
+                while sf_borderStroke and sf_borderStroke.Parent do
+                    hue = (hue + 0.005) % 1
+                    sf_borderStroke.Color = Color3.fromHSV(hue, 1, 1)
+                    task.wait(0.05)
+                end
+            end)
+        end
+
+        local function RefreshPlayerList()
+            for _, btn in pairs(sf_playerButtons) do
+                pcall(function() btn:Destroy() end)
+            end
+            sf_playerButtons = {}
+            if not sf_playerListScrolling then return end
+
+            local list = {}
+            for _, p in pairs(SF_Players:GetPlayers()) do
+                if p ~= SF_LocalPlayer then table.insert(list, p) end
+            end
+            table.sort(list, function(a, b) return a.Name < b.Name end)
+
+            local yPos = 5
+            for _, player in pairs(list) do
+                local btn = Instance.new("TextButton")
+                btn.Size = UDim2.new(0.9, 0, 0, 22)
+                btn.Position = UDim2.new(0.05, 0, 0, yPos)
+                btn.Text = player.Name
+                btn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                btn.Font = Enum.Font.SourceSans
+                btn.TextSize = 12
+                btn.BorderSizePixel = 0
+                btn.Parent = sf_playerListScrolling
+                local corner = Instance.new("UICorner")
+                corner.CornerRadius = UDim.new(0, 4)
+                corner.Parent = btn
+                btn.MouseButton1Click:Connect(function()
+                    for _, b in pairs(sf_playerButtons) do
+                        b.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+                    end
+                    btn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+                    sf_selectedPlayer = player
+                    UpdateStatus("等待甩飞...", nil)
+                end)
+                table.insert(sf_playerButtons, btn)
+                yPos = yPos + 27
+            end
+            sf_playerListScrolling.CanvasSize = UDim2.new(0, 0, 0, yPos + 5)
+        end
+
+        local function TeleportToPlayer()
+            if not sf_selectedPlayer then
+                UpdateStatus("⚠️ 未选择玩家", false)
+                return
+            end
+            local char = SafeGetCharacter(sf_selectedPlayer)
+            if not char then
+                UpdateStatus("⚠️ 目标不在游戏中", false)
+                return
+            end
+            local hrp = SafeGetHRP(char)
+            if not hrp then
+                UpdateStatus("⚠️ 目标无角色", false)
+                return
+            end
+            local myChar = SafeGetCharacter(SF_LocalPlayer)
+            local myHrp = SafeGetHRP(myChar)
+            if not myHrp then return end
+            local lookVector = hrp.CFrame.LookVector
+            local targetPos = hrp.Position + lookVector * 5
+            myHrp.CFrame = CFrame.new(targetPos)
+            UpdateStatus("✅ 已传送", true)
+        end
+
+        local function TeleportFlyToPlayer()
+            if sf_isTeleportFlying then return end
+            if not sf_selectedPlayer then
+                UpdateStatus("⚠️ 未选择玩家", false)
+                return
+            end
+            local targetChar = SafeGetCharacter(sf_selectedPlayer)
+            if not targetChar then
+                UpdateStatus("⚠️ 目标不在游戏中", false)
+                return
+            end
+            local targetHrp = SafeGetHRP(targetChar)
+            if not targetHrp then
+                UpdateStatus("⚠️ 目标无角色", false)
+                return
+            end
+            local myChar = SafeGetCharacter(SF_LocalPlayer)
+            local myHrp = SafeGetHRP(myChar)
+            if not myHrp then return end
+
+            sf_isTeleportFlying = true
+            sf_teleportFlyBtn.Text = "⏳ 执行中..."
+            sf_teleportFlyBtn.BackgroundColor3 = Color3.fromRGB(200, 150, 0)
+            sf_originalPosition = myHrp.Position
+            sf_wasSilentFlyEnabledBefore = sf_isSilentFlyEnabled
+            if not sf_isSilentFlyEnabled then
+                ToggleSilentFly(true)
+            end
+
+            local startTime = tick()
+            local direction = 1
+            local lastSwitch = tick()
+            local detected = false
+
+            while tick() - startTime < 3 do
+                local currentTargetChar = SafeGetCharacter(sf_selectedPlayer)
+                if not currentTargetChar then
+                    UpdateStatus("⚠️ 目标已离开", false)
+                    break
+                end
+                local currentTargetHrp = SafeGetHRP(currentTargetChar)
+                if not currentTargetHrp then break end
+
+                if tick() - lastSwitch > 0.15 then
+                    direction = direction * -1
+                    lastSwitch = tick()
+                end
+
+                local myChar2 = SafeGetCharacter(SF_LocalPlayer)
+                local myHrp2 = SafeGetHRP(myChar2)
+                if myHrp2 then
+                    local offset = direction * 2
+                    local targetPos = currentTargetHrp.Position + currentTargetHrp.CFrame.LookVector * offset
+                    myHrp2.CFrame = CFrame.new(targetPos)
+                end
+
+                if IsPlayerFlying(sf_selectedPlayer) and not detected then
+                    detected = true
+                    UpdateStatus("🟢 已甩飞该玩家", true)
+                end
+                task.wait(0.05)
+            end
+
+            if not detected and SafeGetCharacter(sf_selectedPlayer) then
+                UpdateStatus("🔴 甩飞无效", false)
+            end
+
+            local myChar3 = SafeGetCharacter(SF_LocalPlayer)
+            local myHrp3 = SafeGetHRP(myChar3)
+            if myHrp3 and sf_originalPosition then
+                myHrp3.Position = sf_originalPosition
+                myHrp3.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                myHrp3.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+            end
+
+            if not sf_wasSilentFlyEnabledBefore then
+                ToggleSilentFly(false)
+            end
+
+            sf_isTeleportFlying = false
+            sf_teleportFlyBtn.Text = "🔄 传送甩飞"
+            sf_teleportFlyBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+        end
+
+        local function ToggleLoopFly(state)
+            sf_isLoopFlyEnabled = state
+            for _, conn in pairs(sf_loopFlyConnections) do
+                if conn then pcall(function() conn:Disconnect() end) end
+            end
+            sf_loopFlyConnections = {}
+
+            if sf_isLoopFlyEnabled then
+                if not sf_selectedPlayer then
+                    UpdateStatus("⚠️ 未选择玩家", false)
+                    sf_isLoopFlyEnabled = false
+                    UpdateLoopFlyButton()
+                    return
+                end
+                local targetChar = SafeGetCharacter(sf_selectedPlayer)
+                if not targetChar then
+                    UpdateStatus("⚠️ 目标不在游戏中", false)
+                    sf_isLoopFlyEnabled = false
+                    UpdateLoopFlyButton()
+                    return
+                end
+                local myChar = SafeGetCharacter(SF_LocalPlayer)
+                local myHrp = SafeGetHRP(myChar)
+                if not myHrp then
+                    sf_isLoopFlyEnabled = false
+                    UpdateLoopFlyButton()
+                    return
+                end
+
+                sf_loopTargetPlayer = sf_selectedPlayer
+                sf_originalPosition = myHrp.Position
+                sf_wasSilentFlyEnabledBefore = sf_isSilentFlyEnabled
+                if not sf_isSilentFlyEnabled then
+                    ToggleSilentFly(true)
+                end
+
+                UpdateStatus("🔄 循环甩飞中...", nil)
+
+                local loopConn = SF_RunService.Heartbeat:Connect(function()
+                    if not sf_isLoopFlyEnabled then return end
+                    local currentTargetChar = SafeGetCharacter(sf_loopTargetPlayer)
+                    if not currentTargetChar then
+                        UpdateStatus("⚠️ 目标已离开", false)
+                        ToggleLoopFly(false)
+                        return
+                    end
+                    local currentTargetHrp = SafeGetHRP(currentTargetChar)
+                    if not currentTargetHrp then return end
+
+                    local direction = math.sin(tick() * 6)
+                    local offset = direction * 2.5
+                    local myChar2 = SafeGetCharacter(SF_LocalPlayer)
+                    local myHrp2 = SafeGetHRP(myChar2)
+                    if myHrp2 then
+                        local targetPos = currentTargetHrp.Position + currentTargetHrp.CFrame.LookVector * offset
+                        myHrp2.CFrame = CFrame.new(targetPos)
+                    end
+
+                    if IsPlayerFlying(sf_loopTargetPlayer) then
+                        UpdateStatus("🟢 已甩飞该玩家", true)
+                    else
+                        UpdateStatus("🔴 甩飞无效", false)
+                    end
+                end)
+                table.insert(sf_loopFlyConnections, loopConn)
+
+                local leaveConn = SF_Players.PlayerRemoving:Connect(function(player)
+                    if player == sf_loopTargetPlayer and sf_isLoopFlyEnabled then
+                        UpdateStatus("⚠️ 目标已离开", false)
+                        ToggleLoopFly(false)
+                    end
+                end)
+                table.insert(sf_loopFlyConnections, leaveConn)
+            else
+                local myChar = SafeGetCharacter(SF_LocalPlayer)
+                local myHrp = SafeGetHRP(myChar)
+                if myHrp and sf_originalPosition then
+                    myHrp.Position = sf_originalPosition
+                    myHrp.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                    myHrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                end
+                if not sf_wasSilentFlyEnabledBefore then
+                    ToggleSilentFly(false)
+                end
+                sf_loopTargetPlayer = nil
+                sf_originalPosition = nil
+                UpdateStatus("⏸️ 已停止", nil)
+            end
+            UpdateLoopFlyButton()
+        end
+
+        local function CreateMainUI()
+            local screenGui = Instance.new("ScreenGui")
+            screenGui.Parent = SF_LocalPlayer:WaitForChild("PlayerGui")
+            screenGui.Name = "SilentFlyScript"
+            screenGui.ResetOnSpawn = false
+
+            sf_mainFrame = Instance.new("Frame")
+            sf_mainFrame.Size = UDim2.new(0, 250, 0, 360)
+            sf_mainFrame.Position = UDim2.new(0.85, -125, 0.45, -180)
+            sf_mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+            sf_mainFrame.Active = true
+            sf_mainFrame.Draggable = true
+            sf_mainFrame.Parent = screenGui
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 10)
+            corner.Parent = sf_mainFrame
+
+            sf_borderStroke = Instance.new("UIStroke")
+            sf_borderStroke.Thickness = 2
+            sf_borderStroke.Parent = sf_mainFrame
+            StartRainbowBorder()
+
+            local title = Instance.new("TextLabel")
+            title.Size = UDim2.new(1, 0, 0, 30)
+            title.BackgroundTransparency = 1
+            title.Text = "🔇 静默甩飞"
+            title.TextColor3 = Color3.fromRGB(255, 200, 100)
+            title.TextSize = 16
+            title.Font = Enum.Font.SourceSansBold
+            title.Parent = sf_mainFrame
+
+            local line = Instance.new("Frame")
+            line.Size = UDim2.new(0.9, 0, 0, 1)
+            line.Position = UDim2.new(0.05, 0, 0, 30)
+            line.BackgroundColor3 = Color3.fromRGB(255, 200, 100)
+            line.Parent = sf_mainFrame
+
+            sf_toggleBtn = Instance.new("TextButton")
+            sf_toggleBtn.Size = UDim2.new(0.85, 0, 0, 30)
+            sf_toggleBtn.Position = UDim2.new(0.075, 0, 0, 38)
+            sf_toggleBtn.Text = "🔇 静默甩飞 OFF"
+            sf_toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+            sf_toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            sf_toggleBtn.Font = Enum.Font.SourceSansBold
+            sf_toggleBtn.TextSize = 13
+            sf_toggleBtn.Parent = sf_mainFrame
+            local btnCorner1 = Instance.new("UICorner")
+            btnCorner1.CornerRadius = UDim.new(0, 6)
+            btnCorner1.Parent = sf_toggleBtn
+            sf_toggleBtn.MouseButton1Click:Connect(function()
+                sf_isSilentFlyEnabled = not sf_isSilentFlyEnabled
+                ToggleSilentFly(sf_isSilentFlyEnabled)
+            end)
+
+            sf_playerCountLabel = Instance.new("TextLabel")
+            sf_playerCountLabel.Size = UDim2.new(0.9, 0, 0, 20)
+            sf_playerCountLabel.Position = UDim2.new(0.05, 0, 0, 76)
+            sf_playerCountLabel.BackgroundTransparency = 1
+            sf_playerCountLabel.Text = "服务器人数: 0"
+            sf_playerCountLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+            sf_playerCountLabel.TextSize = 12
+            sf_playerCountLabel.Font = Enum.Font.SourceSans
+            sf_playerCountLabel.TextXAlignment = Enum.TextXAlignment.Left
+            sf_playerCountLabel.Parent = sf_mainFrame
+
+            sf_listToggleBtn = Instance.new("TextButton")
+            sf_listToggleBtn.Size = UDim2.new(0.85, 0, 0, 25)
+            sf_listToggleBtn.Position = UDim2.new(0.075, 0, 0, 100)
+            sf_listToggleBtn.Text = "📋 显示玩家列表"
+            sf_listToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 80, 120)
+            sf_listToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            sf_listToggleBtn.Font = Enum.Font.SourceSansBold
+            sf_listToggleBtn.TextSize = 12
+            sf_listToggleBtn.Parent = sf_mainFrame
+            local btnCorner2 = Instance.new("UICorner")
+            btnCorner2.CornerRadius = UDim.new(0, 6)
+            btnCorner2.Parent = sf_listToggleBtn
+            sf_listToggleBtn.MouseButton1Click:Connect(function()
+                sf_isPlayerListVisible = not sf_isPlayerListVisible
+                if sf_isPlayerListVisible then
+                    sf_listToggleBtn.Text = "📋 隐藏玩家列表"
+                    sf_playerListFrame.Visible = true
+                    RefreshPlayerList()
+                else
+                    sf_listToggleBtn.Text = "📋 显示玩家列表"
+                    sf_playerListFrame.Visible = false
+                end
+            end)
+
+            sf_playerListFrame = Instance.new("Frame")
+            sf_playerListFrame.Size = UDim2.new(0, 210, 0, 80)
+            sf_playerListFrame.Position = UDim2.new(0.04, 0, 0, 130)
+            sf_playerListFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+            sf_playerListFrame.BackgroundTransparency = 0.2
+            sf_playerListFrame.ClipsDescendants = true
+            sf_playerListFrame.Visible = false
+            sf_playerListFrame.Parent = sf_mainFrame
+            local listCorner = Instance.new("UICorner")
+            listCorner.CornerRadius = UDim.new(0, 4)
+            listCorner.Parent = sf_playerListFrame
+
+            sf_playerListScrolling = Instance.new("ScrollingFrame")
+            sf_playerListScrolling.Size = UDim2.new(1, -4, 1, 0)
+            sf_playerListScrolling.Position = UDim2.new(0, 2, 0, 0)
+            sf_playerListScrolling.BackgroundTransparency = 1
+            sf_playerListScrolling.ScrollBarThickness = 4
+            sf_playerListScrolling.CanvasSize = UDim2.new(0, 0, 0, 0)
+            sf_playerListScrolling.Parent = sf_playerListFrame
+
+            local btnY = 218
+
+            sf_teleportBtn = Instance.new("TextButton")
+            sf_teleportBtn.Size = UDim2.new(0.28, 0, 0, 28)
+            sf_teleportBtn.Position = UDim2.new(0.05, 0, 0, btnY)
+            sf_teleportBtn.Text = "🚀 传送"
+            sf_teleportBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+            sf_teleportBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            sf_teleportBtn.Font = Enum.Font.SourceSansBold
+            sf_teleportBtn.TextSize = 12
+            sf_teleportBtn.Parent = sf_mainFrame
+            local btnCorner3 = Instance.new("UICorner")
+            btnCorner3.CornerRadius = UDim.new(0, 6)
+            btnCorner3.Parent = sf_teleportBtn
+            sf_teleportBtn.MouseButton1Click:Connect(TeleportToPlayer)
+
+            sf_teleportFlyBtn = Instance.new("TextButton")
+            sf_teleportFlyBtn.Size = UDim2.new(0.30, 0, 0, 28)
+            sf_teleportFlyBtn.Position = UDim2.new(0.36, 0, 0, btnY)
+            sf_teleportFlyBtn.Text = "🔄 传送甩飞"
+            sf_teleportFlyBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+            sf_teleportFlyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            sf_teleportFlyBtn.Font = Enum.Font.SourceSansBold
+            sf_teleportFlyBtn.TextSize = 12
+            sf_teleportFlyBtn.Parent = sf_mainFrame
+            local btnCorner4 = Instance.new("UICorner")
+            btnCorner4.CornerRadius = UDim.new(0, 6)
+            btnCorner4.Parent = sf_teleportFlyBtn
+            sf_teleportFlyBtn.MouseButton1Click:Connect(TeleportFlyToPlayer)
+
+            sf_loopFlyBtn = Instance.new("TextButton")
+            sf_loopFlyBtn.Size = UDim2.new(0.28, 0, 0, 28)
+            sf_loopFlyBtn.Position = UDim2.new(0.68, 0, 0, btnY)
+            sf_loopFlyBtn.Text = "🔄 循环甩飞 OFF"
+            sf_loopFlyBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+            sf_loopFlyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            sf_loopFlyBtn.Font = Enum.Font.SourceSansBold
+            sf_loopFlyBtn.TextSize = 12
+            sf_loopFlyBtn.Parent = sf_mainFrame
+            local btnCorner5 = Instance.new("UICorner")
+            btnCorner5.CornerRadius = UDim.new(0, 6)
+            btnCorner5.Parent = sf_loopFlyBtn
+            sf_loopFlyBtn.MouseButton1Click:Connect(function()
+                sf_isLoopFlyEnabled = not sf_isLoopFlyEnabled
+                ToggleLoopFly(sf_isLoopFlyEnabled)
+            end)
+
+            sf_statusLabel = Instance.new("TextLabel")
+            sf_statusLabel.Size = UDim2.new(0.9, 0, 0, 25)
+            sf_statusLabel.Position = UDim2.new(0.05, 0, 0, 255)
+            sf_statusLabel.BackgroundTransparency = 1
+            sf_statusLabel.Text = "等待选择玩家..."
+            sf_statusLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+            sf_statusLabel.TextSize = 13
+            sf_statusLabel.Font = Enum.Font.SourceSansBold
+            sf_statusLabel.TextXAlignment = Enum.TextXAlignment.Center
+            sf_statusLabel.Parent = sf_mainFrame
+
+            task.spawn(function()
+                while sf_mainFrame and sf_mainFrame.Parent do
+                    local count = #SF_Players:GetPlayers()
+                    if sf_playerCountLabel then
+                        sf_playerCountLabel.Text = "服务器人数: " .. count
+                    end
+                    task.wait(0.5)
+                end
+            end)
+
+            SF_Players.PlayerAdded:Connect(function()
+                if sf_isPlayerListVisible then RefreshPlayerList() end
+            end)
+            SF_Players.PlayerRemoving:Connect(function()
+                if sf_isPlayerListVisible then RefreshPlayerList() end
+                if sf_isLoopFlyEnabled and sf_loopTargetPlayer and not SF_Players:FindFirstChild(sf_loopTargetPlayer.Name) then
+                    ToggleLoopFly(false)
+                end
+            end)
+
+            UpdateButton()
+            UpdateLoopFlyButton()
+        end
+
+        local function CreateHideButton()
+            local gui = Instance.new("ScreenGui")
+            gui.Name = "HideButtonGui"
+            gui.Parent = SF_LocalPlayer:WaitForChild("PlayerGui")
+            gui.ResetOnSpawn = false
+            sf_hideButton = Instance.new("TextButton")
+            sf_hideButton.Size = UDim2.new(0, 80, 0, 50)
+            sf_hideButton.Position = UDim2.new(1, -90, 0, 10)
+            sf_hideButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+            sf_hideButton.Text = "显示开关"
+            sf_hideButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            sf_hideButton.TextSize = 14
+            sf_hideButton.Font = Enum.Font.SourceSansBold
+            sf_hideButton.Parent = gui
+            sf_hideButton.ZIndex = 10
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 25)
+            corner.Parent = sf_hideButton
+            sf_hideButton.MouseButton1Click:Connect(function()
+                sf_isUIHidden = not sf_isUIHidden
+                ToggleUIHide(sf_isUIHidden)
+            end)
+            ToggleUIHide(false)
+        end
+
+        local function ShowWelcomeScreen()
+            local gui = Instance.new("ScreenGui")
+            gui.Name = "WelcomeGui"
+            gui.Parent = SF_LocalPlayer:WaitForChild("PlayerGui")
+            gui.ResetOnSpawn = false
+            local frame = Instance.new("Frame")
+            frame.Size = UDim2.new(0, 450, 0, 160)
+            frame.Position = UDim2.new(0.5, -225, 0.5, -80)
+            frame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+            frame.BackgroundTransparency = 0.05
+            frame.Parent = gui
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 12)
+            corner.Parent = frame
+            local stroke = Instance.new("UIStroke")
+            stroke.Color = Color3.fromRGB(255, 200, 100)
+            stroke.Thickness = 2
+            stroke.Parent = frame
+            local label = Instance.new("TextLabel")
+            label.Size = UDim2.new(1, 0, 1, 0)
+            label.BackgroundTransparency = 1
+            label.Text = "欢迎使用静默甩飞\n此脚本为AI制作，不允许倒卖"
+            label.TextColor3 = Color3.fromRGB(255, 255, 255)
+            label.TextSize = 24
+            label.Font = Enum.Font.SourceSansBold
+            label.TextWrapped = true
+            label.Parent = frame
+            return gui
+        end
+
+        EnableAntiFly()
+        local welcome = ShowWelcomeScreen()
+        task.wait(3)
+        welcome:Destroy()
+        CreateMainUI()
+        CreateHideButton()
     end)
 end
