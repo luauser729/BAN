@@ -1,5 +1,170 @@
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
+-- ============ 开屏欢迎特效（立即弹出，不等 WindUI 加载）============
+task.spawn(function()
+    local Players = game:GetService("Players")
+    local TweenService = game:GetService("TweenService")
+    local LocalPlayer = Players.LocalPlayer
+
+    local splashGui = Instance.new("ScreenGui")
+    splashGui.Name = "ShenSplashWelcome"
+    splashGui.ResetOnSpawn = false
+    splashGui.IgnoreGuiInset = true
+    splashGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    splashGui.DisplayOrder = 9999
+    splashGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+    -- 全屏黑色遮罩
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1, 0, 1, 0)
+    bg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    bg.BackgroundTransparency = 1
+    bg.BorderSizePixel = 0
+    bg.ZIndex = 1
+    bg.Parent = splashGui
+
+    -- 中央光晕
+    local glow = Instance.new("ImageLabel")
+    glow.AnchorPoint = Vector2.new(0.5, 0.5)
+    glow.Position = UDim2.new(0.5, 0, 0.5, 0)
+    glow.Size = UDim2.fromOffset(0, 0)
+    glow.BackgroundTransparency = 1
+    glow.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+    glow.ImageColor3 = Color3.fromRGB(0, 180, 255)
+    glow.ImageTransparency = 1
+    glow.ZIndex = 3
+    glow.Parent = splashGui
+
+    -- 主标题容器
+    local titleFrame = Instance.new("Frame")
+    titleFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    titleFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    titleFrame.Size = UDim2.fromOffset(600, 160)
+    titleFrame.BackgroundTransparency = 1
+    titleFrame.ZIndex = 5
+    titleFrame.Parent = splashGui
+
+    -- 主标题
+    local titleLbl = Instance.new("TextLabel")
+    titleLbl.AnchorPoint = Vector2.new(0.5, 0)
+    titleLbl.Position = UDim2.new(0.5, 0, 0, 20)
+    titleLbl.Size = UDim2.new(0.6, 0, 0, 60)
+    titleLbl.BackgroundTransparency = 1
+    titleLbl.Font = Enum.Font.GothamBlack
+    titleLbl.TextSize = 48
+    titleLbl.TextXAlignment = Enum.TextXAlignment.Center
+    titleLbl.TextYAlignment = Enum.TextYAlignment.Center
+    titleLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleLbl.TextStrokeTransparency = 0.2
+    titleLbl.TextStrokeColor3 = Color3.fromRGB(0, 120, 255)
+    titleLbl.RichText = true
+    titleLbl.Text = "欢迎使用神脚本"
+    titleLbl.TextTransparency = 1
+    titleLbl.ZIndex = 6
+    titleLbl.Parent = titleFrame
+
+    -- 副标题
+    local subLbl = Instance.new("TextLabel")
+    subLbl.AnchorPoint = Vector2.new(0.5, 0)
+    subLbl.Position = UDim2.new(0.5, 0, 0, 95)
+    subLbl.Size = UDim2.new(1, 0, 0, 30)
+    subLbl.BackgroundTransparency = 1
+    subLbl.Font = Enum.Font.GothamBold
+    subLbl.TextSize = 18
+    subLbl.TextXAlignment = Enum.TextXAlignment.Center
+    subLbl.TextYAlignment = Enum.TextYAlignment.Center
+    subLbl.TextColor3 = Color3.fromRGB(150, 220, 255)
+    subLbl.TextStrokeTransparency = 0.5
+    subLbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    subLbl.Text = "SHEN SCRIPT  ·  正在启动"
+    subLbl.TextTransparency = 1
+    subLbl.ZIndex = 6
+    subLbl.Parent = titleFrame
+
+    -- 底部装饰线
+    local line = Instance.new("Frame")
+    line.AnchorPoint = Vector2.new(0.5, 0.5)
+    line.Position = UDim2.new(0.5, 0, 0, 130)
+    line.Size = UDim2.fromOffset(0, 2)
+    line.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+    line.BorderSizePixel = 0
+    line.ZIndex = 6
+    line.Parent = titleFrame
+    local lineGrad = Instance.new("UIGradient")
+    lineGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(0, 180, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 220, 255)),
+        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(0, 180, 255)),
+    })
+    lineGrad.Parent = line
+
+    local TS = TweenService
+
+    -- 黑底淡入
+    TS:Create(bg, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        BackgroundTransparency = 0.35,
+    }):Play()
+
+    -- 光晕扩大
+    TS:Create(glow, TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = UDim2.fromOffset(700, 700),
+        ImageTransparency = 0.85,
+    }):Play()
+
+    -- 主标题淡入 + 缩放弹跳
+    TS:Create(titleLbl, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        TextTransparency = 0,
+        Size = UDim2.new(1, 0, 0, 60),
+    }):Play()
+
+    task.wait(0.25)
+
+    -- 副标题淡入
+    TS:Create(subLbl, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        TextTransparency = 0,
+    }):Play()
+
+    -- 装饰线扩展
+    TS:Create(line, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = UDim2.fromOffset(400, 2),
+    }):Play()
+
+    -- 主标题颜色循环
+    task.spawn(function()
+        local phase = 0
+        while titleFrame.Parent and titleLbl.Parent do
+            phase = (phase + 0.03) % 1
+            local c1 = Color3.fromHSV(phase, 0.7, 1)
+            local c2 = Color3.fromHSV((phase + 0.5) % 1, 0.7, 1)
+            local grad = titleLbl:FindFirstChildOfClass("UIGradient")
+            if not grad then
+                grad = Instance.new("UIGradient")
+                grad.Parent = titleLbl
+            end
+            grad.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0.0, c1),
+                ColorSequenceKeypoint.new(0.5, c2),
+                ColorSequenceKeypoint.new(1.0, c1),
+            })
+            task.wait(0.05)
+        end
+    end)
+
+    -- 显示 3 秒
+    task.wait(3)
+
+    -- 淡出
+    local fadeOut = TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+    TS:Create(titleLbl, fadeOut, { TextTransparency = 1 }):Play()
+    TS:Create(subLbl, fadeOut, { TextTransparency = 1 }):Play()
+    TS:Create(line, fadeOut, { BackgroundTransparency = 1 }):Play()
+    TS:Create(glow, fadeOut, { ImageTransparency = 1 }):Play()
+    TS:Create(bg, fadeOut, { BackgroundTransparency = 1 }):Play()
+
+    task.wait(0.7)
+    pcall(function() splashGui:Destroy() end)
+end)
+
 getgenv = getgenv or function() return _G end
 if getgenv().ShenScriptLoaded then return end
 getgenv().ShenScriptLoaded = true
@@ -618,8 +783,7 @@ MainTab:Paragraph({ Title = "玩家信息", Desc = "", Image = "user", ImageSize
 
 local function getExecutorName()
     local name = "Unknown"
-    if identifyexecutor then
-        local ok, result = pcall(identifyexecutor)
+    if identifyexecutor then        local ok, result = pcall(identifyexecutor)
         if ok and result then name = result end
     end
     return name
@@ -1222,7 +1386,9 @@ task.spawn(function()
             pcall(function() healthLabel:SetTitle("❤️ 生命值: -- / --") end)
         end
     end
-end)local CommonTab = Window:Tab({ Title = "通用", Icon = "settings" })
+end)
+
+local CommonTab = Window:Tab({ Title = "通用", Icon = "settings" })
 CommonTab:Paragraph({ Title = "通用功能", Desc = "适用于大多数游戏的通用工具", Image = "settings", ImageSize = 20 })
 
 CommonTab:Button({
@@ -1591,316 +1757,20 @@ CommonTab:Toggle({
     end,
 })
 
-local QIURONG_SILK_CODE = [==[
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-
-local lp = Players.LocalPlayer
-local camera = workspace.CurrentCamera
-local pgui = lp:WaitForChild("PlayerGui")
-
-local mt = getrawmetatable(game)
-local old = mt.__namecall
-setreadonly(mt, false)
-mt.__namecall = newcclosure(function(self, ...)
-    if getnamecallmethod() == "FireServer" and tostring(self) == "ForceSelfDamage" then
-        return nil
-    end
-    return old(self, ...)
-end)
-setreadonly(mt, true)
-
-if pgui:FindFirstChild("QiuRong_Silk_V15") then pgui.QiuRong_Silk_V15:Destroy() end
-local ScreenGui = Instance.new("ScreenGui", pgui)
-ScreenGui.Name = "QiuRong_Silk_V15"
-ScreenGui.ResetOnSpawn = false
-
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 180, 0, 140)
-MainFrame.Position = UDim2.new(0.5, -90, 0.4, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFrame.BorderSizePixel = 0
-MainFrame.ClipsDescendants = true
-local UICorner = Instance.new("UICorner", MainFrame)
-UICorner.CornerRadius = UDim.new(0, 15)
-
-local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundTransparency = 1
-Title.Text = "官方"
-Title.TextColor3 = Color3.new(0.8, 0.8, 0.8)
-Title.TextSize = 12
-
-local SpeedInput = Instance.new("TextBox", MainFrame)
-SpeedInput.Size = UDim2.new(0, 140, 0, 30); SpeedInput.Position = UDim2.new(0.5, -70, 0, 40)
-SpeedInput.BackgroundColor3 = Color3.fromRGB(40, 40, 40); SpeedInput.Text = "35"
-SpeedInput.TextColor3 = Color3.new(1, 1, 1); Instance.new("UICorner", SpeedInput).CornerRadius = UDim.new(0, 8)
-
-local Toggle = Instance.new("TextButton", MainFrame)
-Toggle.Size = UDim2.new(0, 140, 0, 40); Toggle.Position = UDim2.new(0.5, -70, 0, 85)
-Toggle.BackgroundColor3 = Color3.fromRGB(60, 60, 60); Toggle.Text = "纯坐标飞行: OFF"
-Toggle.TextColor3 = Color3.new(1, 1, 1); Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0, 10)
-
-local dragging, dragInput, dragStart, startPos
-local function update(input)
-    local delta = input.Position - dragStart
-    MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-end
-
-MainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = MainFrame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then dragging = false end
-        end)
-    end
-end)
-
-MainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then update(input) end
-end)
-
-local joystickActive = false
-local joystickVector = Vector3.new()
-
-local JoyBase = Instance.new("Frame", ScreenGui)
-JoyBase.Size = UDim2.new(0, 130, 0, 130)
-JoyBase.Position = UDim2.new(0, 40, 1, -160)
-JoyBase.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-JoyBase.BackgroundTransparency = 0.6
-JoyBase.Active = false
-JoyBase.ZIndex = 100
-JoyBase.Visible = false
-Instance.new("UICorner", JoyBase).CornerRadius = UDim.new(1, 0)
-
-local JoyKnob = Instance.new("Frame", JoyBase)
-JoyKnob.Size = UDim2.new(0, 60, 0, 60)
-JoyKnob.Position = UDim2.new(0.5, -30, 0.5, -30)
-JoyKnob.BackgroundColor3 = Color3.fromRGB(80, 150, 255)
-JoyKnob.BackgroundTransparency = 0.2
-JoyKnob.ZIndex = 101
-Instance.new("UICorner", JoyKnob).CornerRadius = UDim.new(1, 0)
-
-local MAX_RADIUS = 50
-local joyBasePos = Vector2.new()
-
-local function updateJoystickFromTouch(touchPos)
-    local delta = touchPos - joyBasePos
-    local mag = delta.Magnitude
-    if mag > MAX_RADIUS then
-        delta = delta.Unit * MAX_RADIUS
-        mag = MAX_RADIUS
-    end
-    JoyKnob.Position = UDim2.new(0.5, delta.X - 30, 0.5, delta.Y - 30)
-    local norm = delta / MAX_RADIUS
-    joystickVector = Vector3.new(norm.X, 0, norm.Y)
-end
-
-local joyMode = false
-local JoyButton = nil
-local function setJoyMode(mode)
-    joyMode = mode
-    if JoyBase then JoyBase.Visible = false end
-    if JoyButton then
-        JoyButton.Text = joyMode and "ON" or "摇"
-        JoyButton.BackgroundColor3 = joyMode and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(70, 70, 70)
-    end
-    if not joyMode then
-        joystickActive = false
-        joystickVector = Vector3.new()
-    end
-end
-
-local function isInJoyZone(pos)
-    if not joyMode then return false end
-    local vp = camera.ViewportSize
-    return pos.X <= vp.X * 0.5 and pos.Y >= vp.Y * 0.55
-end
-
-local joyDragInput = nil
-
-UserInputService.InputBegan:Connect(function(input, processed)
-    if not joyMode then return end
-    if input.UserInputType == Enum.UserInputType.Touch then
-        if isInJoyZone(input.Position) and not joyDragInput then
-            joystickActive = true
-            joyDragInput = input
-            joyBasePos = input.Position
-            JoyBase.Position = UDim2.fromOffset(input.Position.X - 65, input.Position.Y - 65)
-            JoyBase.Visible = true
-            JoyKnob.Position = UDim2.new(0.5, -30, 0.5, -30)
-        end
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input, processed)
-    if not joyMode then return end
-    if joystickActive and joyDragInput and input == joyDragInput then
-        if input.UserInputType == Enum.UserInputType.Touch then
-            updateJoystickFromTouch(input.Position)
-        end
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input, processed)
-    if joyDragInput and input == joyDragInput then
-        joystickActive = false
-        joystickVector = Vector3.new()
-        joyDragInput = nil
-        if joyMode then JoyBase.Visible = false end
-    end
-end)
-
-local isFlying = false
-local flySpeed = 35
-local animCache
-local ControlModule = require(lp.PlayerScripts:WaitForChild("PlayerModule")):GetControls()
-local flightConnection = nil
-local lastUpdateTime = tick()
-
-local function startFly()
-    local char = lp.Character or lp.CharacterAdded:Wait()
-    local hrp = char:WaitForChild("HumanoidRootPart")
-    local hum = char:WaitForChild("Humanoid")
-    local animate = char:FindFirstChild("Animate")
-
-    if animate then animCache = animate; animate.Parent = nil end
-    hum.AutoRotate = false
-
-    if flightConnection then flightConnection:Disconnect() end
-
-    lastUpdateTime = tick()
-    flightConnection = RunService.Heartbeat:Connect(function()
-        if not isFlying or not char.Parent then
-            if flightConnection then flightConnection:Disconnect() end
-            return
-        end
-
-        local now = tick()
-        local dt = now - lastUpdateTime
-        lastUpdateTime = now
-
-        local moveVec
-        if joystickActive and joyMode then
-            moveVec = joystickVector
-        else
-            moveVec = ControlModule:GetMoveVector()
-        end
-
-        local camCF = camera.CFrame
-        local moveDir = (camCF.LookVector * -moveVec.Z) + (camCF.RightVector * moveVec.X) + (Vector3.new(0, moveVec.Y, 0))
-
-        if moveVec.Magnitude > 0 then
-            local newPos = hrp.Position + moveDir.Unit * (flySpeed * dt)
-            hrp.CFrame = CFrame.new(newPos, newPos + camCF.LookVector)
-        else
-            hrp.CFrame = CFrame.lookAlong(hrp.Position, Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z))
-        end
-
-        hrp.AssemblyLinearVelocity = Vector3.new()
-    end)
-end
-
-Toggle.MouseButton1Click:Connect(function()
-    isFlying = not isFlying
-    flySpeed = tonumber(SpeedInput.Text) or 35
-    Toggle.Text = isFlying and "已开启 - 运行中" or "纯坐标飞行: OFF"
-    TweenService:Create(Toggle, TweenInfo.new(0.3), {BackgroundColor3 = isFlying and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(60, 60, 60)}):Play()
-    if isFlying then
-        startFly()
-    else
-        if flightConnection then
-            flightConnection:Disconnect()
-            flightConnection = nil
-        end
-        local char = lp.Character
-        if char then
-            local hum = char:FindFirstChild("Humanoid")
-            if hum then hum.AutoRotate = true end
-            local animate = char:FindFirstChild("Animate")
-            if animCache and not animate then
-                animCache.Parent = char
-                animCache = nil
-            end
-        end
-    end
-end)
-
-local function topBtn(t, x, c, f)
-    local b = Instance.new("TextButton", MainFrame)
-    b.Size = UDim2.new(0, 25, 0, 25); b.Position = UDim2.new(1, x, 0, 5); b.Text = t
-    b.BackgroundColor3 = c; b.TextColor3 = Color3.new(1, 1, 1); Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
-    b.MouseButton1Click:Connect(f)
-end
-
-topBtn("×", -30, Color3.fromRGB(150, 50, 50), function()
-    isFlying = false
-    if flightConnection then flightConnection:Disconnect() end
-    local char = lp.Character
-    if char then
-        local hum = char:FindFirstChild("Humanoid")
-        if hum then hum.AutoRotate = true end
-        local animate = char:FindFirstChild("Animate")
-        if animCache and not animate then
-            animCache.Parent = char
-        end
-    end
-    ScreenGui:Destroy()
-end)
-
-topBtn("-", -60, Color3.fromRGB(70, 70, 70), function()
-    local isCollapsed = MainFrame.Size.Y.Offset < 140
-    local targetH = isCollapsed and 140 or 35
-    TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {Size = UDim2.new(0, 180, 0, targetH)}):Play()
-    Toggle.Visible, SpeedInput.Visible = isCollapsed, isCollapsed
-end)
-
-JoyButton = Instance.new("TextButton", MainFrame)
-JoyButton.Size = UDim2.new(0, 26, 0, 26)
-JoyButton.Position = UDim2.new(0, 6, 0, 2)
-JoyButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-JoyButton.BorderSizePixel = 0
-JoyButton.Text = "摇"
-JoyButton.TextColor3 = Color3.new(1, 1, 1)
-JoyButton.TextSize = 13
-local JoyBtnCorner = Instance.new("UICorner", JoyButton)
-JoyBtnCorner.CornerRadius = UDim.new(0, 6)
-JoyButton.ZIndex = 50
-JoyButton.MouseButton1Click:Connect(function()
-    setJoyMode(not joyMode)
-end)
-
-MainFrame.Size = UDim2.new(0, 0, 0, 0)
-MainFrame:TweenSize(UDim2.new(0, 180, 0, 140), "Out", "Back", 0.5)
-]==]
-
 CommonTab:Button({
     Title = "🚗 坐标飞车",
-    Desc = "点击弹出纯坐标飞行 + 手机移动摇杆面板",
+    Desc = "点击执行纯坐标飞行脚本",
     Callback = function()
         local ok, err = pcall(function()
-            local fn = loadstring(QIURONG_SILK_CODE)
-            if fn then fn() end
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/luauser729/9966/main/7878"))()
         end)
         if ok then
-            WindUI:Notify({ Title = "🚗 坐标飞车", Content = "面板已打开", Duration = 2, Icon = "car" })
+            WindUI:Notify({ Title = "🚗 坐标飞车", Content = "脚本已执行", Duration = 2, Icon = "car" })
         else
             WindUI:Notify({ Title = "❌ 加载失败", Content = tostring(err), Duration = 4, Icon = "alert-circle" })
         end
     end,
 })
-
-CommonTab:Divider()
 
 CommonTab:Button({
     Title = "✈️ 飞行 V3",
@@ -1960,7 +1830,9 @@ CommonTab:Button({
             WindUI:Notify({ Title = "❌ 加载失败", Content = tostring(err), Duration = 4, Icon = "alert-circle" })
         end
     end,
-})local ItemTab = Window:Tab({ Title = "道具", Icon = "package" })
+})
+
+local ItemTab = Window:Tab({ Title = "道具", Icon = "package" })
 
 ItemTab:Paragraph({
     Title = "神之道具",
@@ -2050,9 +1922,7 @@ local function makeToolManager(toolName, builder, onActivated)
             end
             watcher = nil
         end)
-    end
-
-    LocalPlayer.CharacterAdded:Connect(function()
+    end    LocalPlayer.CharacterAdded:Connect(function()
         if enabled then
             task.wait(0.5)
             give()
@@ -2081,7 +1951,6 @@ local tpManager = makeToolManager(
         tool.RequiresHandle = true
         tool.CanBeDropped = false
         tool.ToolTip = "拿起点地图任意位置，瞬移过去"
-
         local handle = Instance.new("Part")
         handle.Name = "Handle"
         handle.Size = Vector3.new(1, 1, 1)
@@ -2091,19 +1960,16 @@ local tpManager = makeToolManager(
         handle.CanCollide = false
         handle.Massless = true
         handle.Parent = tool
-
         local light = Instance.new("PointLight")
         light.Color = Color3.fromRGB(0, 180, 255)
         light.Range = 8
         light.Brightness = 2
         light.Parent = handle
-
         local selection = Instance.new("SelectionBox")
         selection.Adornee = handle
         selection.LineThickness = 0.05
         selection.Color3 = Color3.fromRGB(0, 200, 255)
         selection.Parent = handle
-
         return tool
     end,
     function()
@@ -2126,7 +1992,7 @@ ItemTab:Toggle({
     Callback = function(state)
         tpManager.set(state)
         if state then
-            WindUI:Notify({ Title = "🎯 传送道具", Content = "已发放「神之传送器」，拿起来点哪传哪", Duration = 3, Icon = "crosshair" })
+            WindUI:Notify({ Title = "🎯 传送道具", Content = "已发放「神之传送器」", Duration = 3, Icon = "crosshair" })
         else
             WindUI:Notify({ Title = "🎯 传送道具", Content = "道具已移除", Duration = 2, Icon = "x" })
         end
@@ -2143,7 +2009,6 @@ local blinkManager = makeToolManager(
         if not hrp then return end
         local mouse = LocalPlayer:GetMouse()
         if not mouse or not mouse.Hit then return end
-
         local from = hrp.Position
         local to = mouse.Hit.Position
         local dir = (to - from)
@@ -2160,7 +2025,7 @@ ItemTab:Toggle({
     Callback = function(state)
         blinkManager.set(state)
         if state then
-            WindUI:Notify({ Title = "⚡ 神之闪现", Content = "已发放，拿起来点哪闪哪", Duration = 2, Icon = "zap" })
+            WindUI:Notify({ Title = "⚡ 神之闪现", Content = "已发放", Duration = 2, Icon = "zap" })
         else
             WindUI:Notify({ Title = "⚡ 神之闪现", Content = "已移除", Duration = 2, Icon = "x" })
         end
@@ -2175,9 +2040,7 @@ local bombManager = makeToolManager(
     function()
         local mouse = LocalPlayer:GetMouse()
         if not mouse or not mouse.Hit then return end
-
         local pos = mouse.Hit.Position
-
         local bomb = Instance.new("Part")
         bomb.Shape = Enum.PartType.Ball
         bomb.Size = Vector3.new(1, 1, 1)
@@ -2248,69 +2111,15 @@ local bombManager = makeToolManager(
 
 ItemTab:Toggle({
     Title = "💣 神之炸弹",
-    Desc = "背包生成「神之炸弹」，点击在鼠标位置产生可见爆炸+音效+推力",
+    Desc = "背包生成「神之炸弹」，点击在鼠标位置产生爆炸+音效+推力",
     Value = false,
     Callback = function(state)
         bombManager.set(state)
         if state then
-            WindUI:Notify({ Title = "💣 神之炸弹", Content = "已发放，点击轰炸", Duration = 2, Icon = "bomb" })
+            WindUI:Notify({ Title = "💣 神之炸弹", Content = "已发放", Duration = 2, Icon = "bomb" })
         else
             WindUI:Notify({ Title = "💣 神之炸弹", Content = "已移除", Duration = 2, Icon = "x" })
         end
-    end,
-})
-
-local shieldEnabled = false
-local shieldPart = nil
-local shieldConn = nil
-
-local function applyShield()
-    if shieldConn then shieldConn:Disconnect() shieldConn = nil end
-    if shieldPart then pcall(function() shieldPart:Destroy() end) shieldPart = nil end
-
-    if not shieldEnabled then return end
-
-    local char = LocalPlayer.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    shieldPart = Instance.new("Part")
-    shieldPart.Shape = Enum.PartType.Ball
-    shieldPart.Size = Vector3.new(6, 6, 6)
-    shieldPart.Anchored = true
-    shieldPart.CanCollide = false
-    shieldPart.CanQuery = false
-    shieldPart.CanTouch = false
-    shieldPart.Material = Enum.Material.ForceField
-    shieldPart.Color = Color3.fromRGB(0, 200, 255)
-    shieldPart.Transparency = 0.5
-    shieldPart.Parent = workspace
-
-    shieldConn = RunService.Heartbeat:Connect(function()
-        if not shieldEnabled or not shieldPart or not shieldPart.Parent then return end
-        local c = LocalPlayer.Character
-        if not c then return end
-        local r = c:FindFirstChild("HumanoidRootPart")
-        if not r then return end
-        shieldPart.CFrame = r.CFrame
-    end)
-end
-
-LocalPlayer.CharacterAdded:Connect(function()
-    if shieldEnabled then
-        task.wait(0.3)
-        applyShield()
-    end
-end)
-
-ItemTab:Toggle({
-    Title = "🛡️ 神之护盾（视觉）",
-    Desc = "给自己套一个跟随的发光球体，纯装饰无实际防御",
-    Value = false,
-    Callback = function(state)
-        shieldEnabled = state
-        applyShield()
     end,
 })
 
@@ -2322,7 +2131,6 @@ local torchManager = makeToolManager(
         tool.RequiresHandle = true
         tool.CanBeDropped = false
         tool.ToolTip = "本地火把，只有你自己能看见"
-
         local handle = Instance.new("Part")
         handle.Name = "Handle"
         handle.Size = Vector3.new(0.35, 2.4, 0.35)
@@ -2331,12 +2139,10 @@ local torchManager = makeToolManager(
         handle.CanCollide = false
         handle.Massless = true
         handle.Parent = tool
-
         local attach = Instance.new("Attachment")
         attach.Name = "FireAttach"
         attach.Position = Vector3.new(0, handle.Size.Y / 2, 0)
         attach.Parent = handle
-
         local fire = Instance.new("ParticleEmitter")
         fire.Name = "Fire"
         fire.Texture = "rbxasset://textures/particles/fire_main.dds"
@@ -2361,14 +2167,12 @@ local torchManager = makeToolManager(
         fire.LightEmission = 0.8
         fire.LightInfluence = 0.2
         fire.Parent = attach
-
         local light = Instance.new("PointLight")
         light.Color = Color3.fromRGB(255, 170, 60)
         light.Range = 18
         light.Brightness = 2.5
         light.Shadows = true
         light.Parent = handle
-
         return tool
     end,
     function() end
@@ -2376,12 +2180,12 @@ local torchManager = makeToolManager(
 
 ItemTab:Toggle({
     Title = "🔥 火把",
-    Desc = "背包生成「火把」，拿在手上发光发热，只有你自己能看见",
+    Desc = "背包生成「火把」，拿在手上发光发热",
     Value = false,
     Callback = function(state)
         torchManager.set(state)
         if state then
-            WindUI:Notify({ Title = "🔥 火把", Content = "已发放，拿起来照明（仅自己可见）", Duration = 2, Icon = "flame" })
+            WindUI:Notify({ Title = "🔥 火把", Content = "已发放", Duration = 2, Icon = "flame" })
         else
             WindUI:Notify({ Title = "🔥 火把", Content = "已移除", Duration = 2, Icon = "x" })
         end
@@ -2395,23 +2199,19 @@ local rainbowConn = nil
 local function applyRainbow()
     if rainbowConn then rainbowConn:Disconnect() rainbowConn = nil end
     if rainbowAttachment then pcall(function() rainbowAttachment:Destroy() end) rainbowAttachment = nil end
-
     if not rainbowEnabled then return end
-
     local char = LocalPlayer.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
-
     rainbowAttachment = Instance.new("Attachment")
     rainbowAttachment.Name = "RainbowTrailAttach"
     rainbowAttachment.Position = Vector3.new(0, 0, 0)
     rainbowAttachment.Parent = hrp
-
-    local rainbowEmitter = Instance.new("ParticleEmitter")
-    rainbowEmitter.Name = "RainbowTrail"
-    rainbowEmitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-    rainbowEmitter.Color = ColorSequence.new({
+    local pe = Instance.new("ParticleEmitter")
+    pe.Name = "RainbowTrail"
+    pe.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+    pe.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 0, 0)),
         ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 255, 0)),
         ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0, 255, 0)),
@@ -2419,60 +2219,50 @@ local function applyRainbow()
         ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 0, 255)),
         ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 0, 255)),
     })
-    rainbowEmitter.Size = NumberSequence.new({
+    pe.Size = NumberSequence.new({
         NumberSequenceKeypoint.new(0.0, 1.2),
         NumberSequenceKeypoint.new(1.0, 0.0),
     })
-    rainbowEmitter.Transparency = NumberSequence.new({
+    pe.Transparency = NumberSequence.new({
         NumberSequenceKeypoint.new(0.0, 0.2),
         NumberSequenceKeypoint.new(1.0, 1.0),
     })
-    rainbowEmitter.Lifetime = NumberRange.new(0.8, 1.4)
-    rainbowEmitter.Rate = 60
-    rainbowEmitter.Speed = NumberRange.new(0.5, 2)
-    rainbowEmitter.SpreadAngle = Vector2.new(180, 180)
-    rainbowEmitter.LightEmission = 0.7
-    rainbowEmitter.LightInfluence = 0.2
-    rainbowEmitter.Parent = rainbowAttachment
+    pe.Lifetime = NumberRange.new(0.8, 1.4)
+    pe.Rate = 60
+    pe.Speed = NumberRange.new(0.5, 2)
+    pe.SpreadAngle = Vector2.new(180, 180)
+    pe.LightEmission = 0.7
+    pe.LightInfluence = 0.2
+    pe.Parent = rainbowAttachment
 end
 
 LocalPlayer.CharacterAdded:Connect(function()
-    if rainbowEnabled then
-        task.wait(0.3)
-        applyRainbow()
-    end
+    if rainbowEnabled then task.wait(0.3); applyRainbow() end
 end)
 
 ItemTab:Toggle({
     Title = "🌈 彩虹拖尾",
-    Desc = "身上拖一条彩虹色粒子拖尾（本地视觉效果）",
+    Desc = "身上拖一条彩虹色粒子拖尾（本地视觉）",
     Value = false,
     Callback = function(state)
         rainbowEnabled = state
         applyRainbow()
-        WindUI:Notify({ Title = "🌈 彩虹拖尾", Content = state and "已开启" or "已关闭", Duration = 2, Icon = "sparkles" })
     end,
 })
 
--- ✨ 星辰环绕
 local starsEnabled = false
 local starsConn = nil
 local starsParts = {}
 
 local function applyStars()
     if starsConn then starsConn:Disconnect() starsConn = nil end
-    for _, p in ipairs(starsParts) do
-        pcall(function() p:Destroy() end)
-    end
+    for _, p in ipairs(starsParts) do pcall(function() p:Destroy() end) end
     starsParts = {}
-
     if not starsEnabled then return end
-
     local char = LocalPlayer.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
-
     for i = 1, 6 do
         local star = Instance.new("Part")
         star.Shape = Enum.PartType.Ball
@@ -2484,16 +2274,13 @@ local function applyStars()
         star.Material = Enum.Material.Neon
         star.Color = Color3.fromHSV((i - 1) / 6, 1, 1)
         star.Parent = workspace
-
         local light = Instance.new("PointLight")
         light.Color = star.Color
         light.Range = 4
         light.Brightness = 2
         light.Parent = star
-
         table.insert(starsParts, star)
     end
-
     local t = 0
     starsConn = RunService.RenderStepped:Connect(function(dt)
         t = t + dt * 2
@@ -2521,11 +2308,9 @@ ItemTab:Toggle({
     Callback = function(state)
         starsEnabled = state
         applyStars()
-        WindUI:Notify({ Title = "✨ 星辰环绕", Content = state and "已开启" or "已关闭", Duration = 2, Icon = "sparkles" })
     end,
 })
 
--- 🎇 神之礼花
 local burstManager = makeToolManager(
     "神之礼花",
     function() return buildGlowTool("神之礼花", Color3.fromRGB(255, 100, 200), "点击在鼠标位置炸出彩色粒子") end,
@@ -2533,7 +2318,6 @@ local burstManager = makeToolManager(
         local mouse = LocalPlayer:GetMouse()
         if not mouse or not mouse.Hit then return end
         local pos = mouse.Hit.Position
-
         local anchor = Instance.new("Part")
         anchor.Size = Vector3.new(0.1, 0.1, 0.1)
         anchor.Position = pos
@@ -2543,10 +2327,8 @@ local burstManager = makeToolManager(
         anchor.CanQuery = false
         anchor.CanTouch = false
         anchor.Parent = workspace
-
         local attach = Instance.new("Attachment")
         attach.Parent = anchor
-
         local pe = Instance.new("ParticleEmitter")
         pe.Texture = "rbxasset://textures/particles/sparkles_main.dds"
         pe.Color = ColorSequence.new({
@@ -2571,10 +2353,7 @@ local burstManager = makeToolManager(
         pe.LightEmission = 1
         pe.Parent = attach
         pe:Emit(200)
-
-        task.delay(2, function()
-            pcall(function() anchor:Destroy() end)
-        end)
+        task.delay(2, function() pcall(function() anchor:Destroy() end) end)
     end
 )
 
@@ -2582,13 +2361,9 @@ ItemTab:Toggle({
     Title = "🎇 神之礼花",
     Desc = "背包生成「神之礼花」，点击在鼠标位置炸出彩色粒子",
     Value = false,
-    Callback = function(state)
-        burstManager.set(state)
-        WindUI:Notify({ Title = "🎇 神之礼花", Content = state and "已发放" or "已移除", Duration = 2, Icon = "sparkles" })
-    end,
+    Callback = function(state) burstManager.set(state) end,
 })
 
--- 🎈 气球
 local balloonEnabled = false
 local balloonPart = nil
 local balloonConn = nil
@@ -2596,14 +2371,11 @@ local balloonConn = nil
 local function applyBalloon()
     if balloonConn then balloonConn:Disconnect() balloonConn = nil end
     if balloonPart then pcall(function() balloonPart:Destroy() end) balloonPart = nil end
-
     if not balloonEnabled then return end
-
     local char = LocalPlayer.Character
     if not char then return end
     local head = char:FindFirstChild("Head")
     if not head then return end
-
     balloonPart = Instance.new("Part")
     balloonPart.Shape = Enum.PartType.Ball
     balloonPart.Size = Vector3.new(2, 2.5, 2)
@@ -2614,7 +2386,6 @@ local function applyBalloon()
     balloonPart.Color = Color3.fromRGB(255, 80, 120)
     balloonPart.Material = Enum.Material.SmoothPlastic
     balloonPart.Parent = workspace
-
     balloonConn = RunService.Heartbeat:Connect(function()
         if not balloonEnabled or not balloonPart or not balloonPart.Parent then return end
         local c = LocalPlayer.Character
@@ -2636,11 +2407,9 @@ ItemTab:Toggle({
     Callback = function(state)
         balloonEnabled = state
         applyBalloon()
-        WindUI:Notify({ Title = "🎈 气球", Content = state and "已开启" or "已关闭", Duration = 2, Icon = "circle" })
     end,
 })
 
--- 👑 王冠（真皇冠造型，戴在头顶）
 local crownEnabled = false
 local crownModel = nil
 local crownConn = nil
@@ -2648,9 +2417,7 @@ local crownConn = nil
 local function buildCrownModel()
     local model = Instance.new("Model")
     model.Name = "ShenCrown"
-
     local gold = Color3.fromRGB(255, 200, 40)
-
     local base = Instance.new("Part")
     base.Name = "Base"
     base.Shape = Enum.PartType.Cylinder
@@ -2663,7 +2430,6 @@ local function buildCrownModel()
     base.CanTouch = false
     base.Parent = model
     base:SetAttribute("Type", "Base")
-
     for i = 1, 4 do
         local spike = Instance.new("Part")
         spike.Name = "BigSpike" .. i
@@ -2679,7 +2445,6 @@ local function buildCrownModel()
         spike:SetAttribute("Angle", (i - 1) / 4 * math.pi * 2)
         spike:SetAttribute("Height", 0.9)
     end
-
     for i = 1, 8 do
         local spike = Instance.new("Part")
         spike.Name = "SmallSpike" .. i
@@ -2695,7 +2460,6 @@ local function buildCrownModel()
         spike:SetAttribute("Angle", (i - 1) / 8 * math.pi * 2)
         spike:SetAttribute("Height", 0.55)
     end
-
     for i = 1, 12 do
         local ball = Instance.new("Part")
         ball.Name = "Ball" .. i
@@ -2711,33 +2475,26 @@ local function buildCrownModel()
         ball:SetAttribute("Type", "Ball")
         ball:SetAttribute("Angle", (i - 1) / 12 * math.pi * 2)
     end
-
     return model
 end
 
 local function applyCrown()
     if crownConn then crownConn:Disconnect() crownConn = nil end
     if crownModel then pcall(function() crownModel:Destroy() end) crownModel = nil end
-
     if not crownEnabled then return end
-
     local char = LocalPlayer.Character
     if not char then return end
     local head = char:FindFirstChild("Head")
     if not head then return end
-
     crownModel = buildCrownModel()
     crownModel.Parent = workspace
-
     crownConn = RunService.Heartbeat:Connect(function()
         if not crownEnabled or not crownModel or not crownModel.Parent then return end
         local c = LocalPlayer.Character
         if not c then return end
         local h = c:FindFirstChild("Head")
         if not h then return end
-
         local headCF = h.CFrame
-
         for _, p in ipairs(crownModel:GetChildren()) do
             if p:IsA("BasePart") then
                 local t = p:GetAttribute("Type")
@@ -2777,27 +2534,21 @@ ItemTab:Toggle({
     Callback = function(state)
         crownEnabled = state
         applyCrown()
-        WindUI:Notify({ Title = "👑 王冠", Content = state and "已开启" or "已关闭", Duration = 2, Icon = "crown" })
     end,
 })
 
--- 🔥 燃烧特效
 local burnEnabled = false
 local burnAttach = nil
-
 local function applyBurn()
     if burnAttach then pcall(function() burnAttach:Destroy() end) burnAttach = nil end
     if not burnEnabled then return end
-
     local char = LocalPlayer.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
-
     burnAttach = Instance.new("Attachment")
     burnAttach.Position = Vector3.new(0, -1, 0)
     burnAttach.Parent = hrp
-
     local pe = Instance.new("ParticleEmitter")
     pe.Texture = "rbxasset://textures/particles/fire_main.dds"
     pe.Color = ColorSequence.new({
@@ -2820,39 +2571,24 @@ local function applyBurn()
     pe.LightEmission = 1
     pe.Parent = burnAttach
 end
-
 LocalPlayer.CharacterAdded:Connect(function()
     if burnEnabled then task.wait(0.3); applyBurn() end
 end)
+ItemTab:Toggle({ Title = "🔥 燃烧特效", Desc = "自己身上持续冒火焰（本地视觉）", Value = false,
+    Callback = function(state) burnEnabled = state; applyBurn() end })
 
-ItemTab:Toggle({
-    Title = "🔥 燃烧特效",
-    Desc = "自己身上持续冒火焰（本地视觉）",
-    Value = false,
-    Callback = function(state)
-        burnEnabled = state
-        applyBurn()
-        WindUI:Notify({ Title = "🔥 燃烧特效", Content = state and "已开启" or "已关闭", Duration = 2, Icon = "flame" })
-    end,
-})
-
--- ❄️ 冰霜特效
 local frostEnabled = false
 local frostAttach = nil
-
 local function applyFrost()
     if frostAttach then pcall(function() frostAttach:Destroy() end) frostAttach = nil end
     if not frostEnabled then return end
-
     local char = LocalPlayer.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
-
     frostAttach = Instance.new("Attachment")
     frostAttach.Position = Vector3.new(0, 0, 0)
     frostAttach.Parent = hrp
-
     local pe = Instance.new("ParticleEmitter")
     pe.Texture = "rbxasset://textures/particles/sparkles_main.dds"
     pe.Color = ColorSequence.new(Color3.fromRGB(180, 230, 255), Color3.fromRGB(90, 150, 255))
@@ -2871,39 +2607,24 @@ local function applyFrost()
     pe.LightEmission = 0.8
     pe.Parent = frostAttach
 end
-
 LocalPlayer.CharacterAdded:Connect(function()
     if frostEnabled then task.wait(0.3); applyFrost() end
 end)
+ItemTab:Toggle({ Title = "❄️ 冰霜特效", Desc = "自己身上持续冒冰霜（本地视觉）", Value = false,
+    Callback = function(state) frostEnabled = state; applyFrost() end })
 
-ItemTab:Toggle({
-    Title = "❄️ 冰霜特效",
-    Desc = "自己身上持续冒冰霜（本地视觉）",
-    Value = false,
-    Callback = function(state)
-        frostEnabled = state
-        applyFrost()
-        WindUI:Notify({ Title = "❄️ 冰霜特效", Content = state and "已开启" or "已关闭", Duration = 2, Icon = "snowflake" })
-    end,
-})
-
--- ⚡ 电击特效
 local sparkEnabled = false
 local sparkAttach = nil
-
 local function applySpark()
     if sparkAttach then pcall(function() sparkAttach:Destroy() end) sparkAttach = nil end
     if not sparkEnabled then return end
-
     local char = LocalPlayer.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
-
     sparkAttach = Instance.new("Attachment")
     sparkAttach.Position = Vector3.new(0, 0, 0)
     sparkAttach.Parent = hrp
-
     local pe = Instance.new("ParticleEmitter")
     pe.Texture = "rbxasset://textures/particles/sparkles_main.dds"
     pe.Color = ColorSequence.new(Color3.fromRGB(255, 255, 100), Color3.fromRGB(100, 200, 255))
@@ -2922,37 +2643,23 @@ local function applySpark()
     pe.LightEmission = 1
     pe.Parent = sparkAttach
 end
-
 LocalPlayer.CharacterAdded:Connect(function()
     if sparkEnabled then task.wait(0.3); applySpark() end
 end)
+ItemTab:Toggle({ Title = "⚡ 电击特效", Desc = "自己身上持续冒电火花（本地视觉）", Value = false,
+    Callback = function(state) sparkEnabled = state; applySpark() end })
 
-ItemTab:Toggle({
-    Title = "⚡ 电击特效",
-    Desc = "自己身上持续冒电火花（本地视觉）",
-    Value = false,
-    Callback = function(state)
-        sparkEnabled = state
-        applySpark()
-        WindUI:Notify({ Title = "⚡ 电击特效", Content = state and "已开启" or "已关闭", Duration = 2, Icon = "zap" })
-    end,
-})
-
--- 🌟 神之印记
 local markEnabled = false
 local markPart = nil
 local markConn = nil
-
 local function applyMark()
     if markConn then markConn:Disconnect() markConn = nil end
     if markPart then pcall(function() markPart:Destroy() end) markPart = nil end
     if not markEnabled then return end
-
     local char = LocalPlayer.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
-
     markPart = Instance.new("Part")
     markPart.Shape = Enum.PartType.Cylinder
     markPart.Size = Vector3.new(0.1, 6, 6)
@@ -2964,7 +2671,6 @@ local function applyMark()
     markPart.Color = Color3.fromRGB(0, 200, 255)
     markPart.Transparency = 0.4
     markPart.Parent = workspace
-
     markConn = RunService.Heartbeat:Connect(function()
         if not markEnabled or not markPart or not markPart.Parent then return end
         local c = LocalPlayer.Character
@@ -2974,95 +2680,49 @@ local function applyMark()
         markPart.CFrame = CFrame.new(r.Position - Vector3.new(0, 3, 0)) * CFrame.Angles(0, 0, math.rad(90))
     end)
 end
-
 LocalPlayer.CharacterAdded:Connect(function()
     if markEnabled then task.wait(0.3); applyMark() end
 end)
+ItemTab:Toggle({ Title = "🌟 神之印记", Desc = "脚下有一个发光光环（本地视觉）", Value = false,
+    Callback = function(state) markEnabled = state; applyMark() end })
 
-ItemTab:Toggle({
-    Title = "🌟 神之印记",
-    Desc = "脚下有一个发光光环（本地视觉）",
-    Value = false,
-    Callback = function(state)
-        markEnabled = state
-        applyMark()
-        WindUI:Notify({ Title = "🌟 神之印记", Content = state and "已开启" or "已关闭", Duration = 2, Icon = "circle" })
-    end,
-})
-
--- 📸 拍照模式
-local cameraModeEnabled = false
-local cameraConn = nil
-local savedCameraType = nil
-
-local function applyCameraMode()
-    if cameraConn then cameraConn:Disconnect() cameraConn = nil end
-    if not cameraModeEnabled then
-        if savedCameraType then
-            pcall(function() workspace.CurrentCamera.CameraType = savedCameraType end)
-        end
-        return
-    end
-    savedCameraType = workspace.CurrentCamera.CameraType
-    cameraConn = RunService.Heartbeat:Connect(function()
-        pcall(function() workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable end)
+local shieldEnabled = false
+local shieldPart = nil
+local shieldConn = nil
+local function applyShield()
+    if shieldConn then shieldConn:Disconnect() shieldConn = nil end
+    if shieldPart then pcall(function() shieldPart:Destroy() end) shieldPart = nil end
+    if not shieldEnabled then return end
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    shieldPart = Instance.new("Part")
+    shieldPart.Shape = Enum.PartType.Ball
+    shieldPart.Size = Vector3.new(6, 6, 6)
+    shieldPart.Anchored = true
+    shieldPart.CanCollide = false
+    shieldPart.CanQuery = false
+    shieldPart.CanTouch = false
+    shieldPart.Material = Enum.Material.ForceField
+    shieldPart.Color = Color3.fromRGB(0, 200, 255)
+    shieldPart.Transparency = 0.5
+    shieldPart.Parent = workspace
+    shieldConn = RunService.Heartbeat:Connect(function()
+        if not shieldEnabled or not shieldPart or not shieldPart.Parent then return end
+        local c = LocalPlayer.Character
+        if not c then return end
+        local r = c:FindFirstChild("HumanoidRootPart")
+        if not r then return end
+        shieldPart.CFrame = r.CFrame
     end)
 end
+LocalPlayer.CharacterAdded:Connect(function()
+    if shieldEnabled then task.wait(0.3); applyShield() end
+end)
+ItemTab:Toggle({ Title = "🛡️ 神之护盾（视觉）", Desc = "给自己套一个跟随的发光球体", Value = false,
+    Callback = function(state) shieldEnabled = state; applyShield() end })
 
-ItemTab:Toggle({
-    Title = "📸 拍照模式",
-    Desc = "把相机设为自由模式（相机不再跟随角色）",
-    Value = false,
-    Callback = function(state)
-        cameraModeEnabled = state
-        applyCameraMode()
-        WindUI:Notify({ Title = "📸 拍照模式", Content = state and "已开启（相机自由）" or "已关闭", Duration = 2, Icon = "camera" })
-    end,
-})
-
--- 🔍 视野放大
-local fovEnabled = false
-local fovValue = 120
-local fovConn = nil
-
-local function applyFov()
-    if fovConn then fovConn:Disconnect() fovConn = nil end
-    if not fovEnabled then return end
-    fovConn = RunService.Heartbeat:Connect(function()
-        pcall(function() workspace.CurrentCamera.FieldOfView = fovValue end)
-    end)
-end
-
-ItemTab:Toggle({
-    Title = "🔍 视野放大",
-    Desc = "把相机 FOV 拉到指定值（默认 120）",
-    Value = false,
-    Callback = function(state)
-        fovEnabled = state
-        applyFov()
-        WindUI:Notify({ Title = "🔍 视野放大", Content = state and "已开启" or "已关闭", Duration = 2, Icon = "eye" })
-    end,
-})
-
-ItemTab:Input({
-    Title = "FOV 数值",
-    Desc = "推荐 70 - 120，默认 120",
-    Value = "120",
-    Placeholder = "120",
-    Callback = function(text)
-        local num = tonumber(text)
-        if num and num >= 30 and num <= 120 then
-            fovValue = num
-            if fovEnabled then
-                pcall(function() workspace.CurrentCamera.FieldOfView = fovValue end)
-            end
-        else
-            WindUI:Notify({ Title = "数值错误", Content = "请输入 30 - 120 之间的数字", Duration = 3, Icon = "alert-circle" })
-        end
-    end,
-})
-
--- 🌫️ 烟雾弹
 local smokeManager = makeToolManager(
     "烟雾弹",
     function() return buildGlowTool("烟雾弹", Color3.fromRGB(180, 180, 180), "点击在鼠标位置生成一大团烟雾") end,
@@ -3070,7 +2730,6 @@ local smokeManager = makeToolManager(
         local mouse = LocalPlayer:GetMouse()
         if not mouse or not mouse.Hit then return end
         local pos = mouse.Hit.Position
-
         local anchor = Instance.new("Part")
         anchor.Size = Vector3.new(0.1, 0.1, 0.1)
         anchor.Position = pos
@@ -3080,10 +2739,8 @@ local smokeManager = makeToolManager(
         anchor.CanQuery = false
         anchor.CanTouch = false
         anchor.Parent = workspace
-
         local attach = Instance.new("Attachment")
         attach.Parent = anchor
-
         local pe = Instance.new("ParticleEmitter")
         pe.Texture = "rbxasset://textures/particles/smoke_main.dds"
         pe.Color = ColorSequence.new(Color3.fromRGB(180, 180, 180), Color3.fromRGB(90, 90, 90))
@@ -3103,21 +2760,15 @@ local smokeManager = makeToolManager(
         pe.LightEmission = 0
         pe.Parent = attach
         pe:Emit(150)
-
-        task.delay(4, function()
-            pcall(function() anchor:Destroy() end)
-        end)
+        task.delay(4, function() pcall(function() anchor:Destroy() end) end)
     end
 )
 
 ItemTab:Toggle({
     Title = "🌫️ 烟雾弹",
-    Desc = "背包生成「烟雾弹」，点击在鼠标位置生成一大团烟雾",
+    Desc = "背包生成「烟雾弹」，点击生成一大团烟雾",
     Value = false,
-    Callback = function(state)
-        smokeManager.set(state)
-        WindUI:Notify({ Title = "🌫️ 烟雾弹", Content = state and "已发放" or "已移除", Duration = 2, Icon = "cloud" })
-    end,
+    Callback = function(state) smokeManager.set(state) end,
 })
 
 ItemTab:Button({
@@ -3160,6 +2811,525 @@ ItemTab:Divider()
 ItemTab:Paragraph({
     Title = "⚠️ 道具类功能可能被部分游戏检测，请谨慎使用",
     Desc = "",
+})
+
+-- ===== ESP 标签（完整版 + 白名单 + 上下天线）=====
+local EspTab = Window:Tab({ Title = "ESP", Icon = "eye" })
+
+EspTab:Paragraph({
+    Title = "📁 玩家透视 ESP",
+    Desc = "点击下方开关启用对应功能，必须先开总开关！",
+    Image = "folder",
+    ImageSize = 20,
+})
+
+local ESP_CFG = {
+    Enabled = false, Box = false, Name = false, Health = false,
+    Distance = false, Weapon = false, Tracer = false,
+    TracerTop = false,
+    UseWhitelist = false,
+}
+local ESP_Cache, ESP_Conn = {}, nil
+local ESP_Whitelist = {}
+
+local function ESP_isWhitelisted(p)
+    return ESP_Whitelist[p.UserId] == true
+end
+
+local function ESP_getWeapon(p)
+    local c = p.Character
+    if not c then return "" end
+    for _, x in ipairs(c:GetChildren()) do
+        if x:IsA("Tool") then return x.Name end
+    end
+    return ""
+end
+
+local function ESP_clean()
+    for _, d in pairs(ESP_Cache) do
+        for _, o in pairs(d) do pcall(function() o:Remove() end) end
+    end
+    ESP_Cache = {}
+end
+
+local function ESP_new(p)
+    if ESP_Cache[p] then return ESP_Cache[p] end
+    local d = {
+        Box      = Drawing.new("Square"),
+        Name     = Drawing.new("Text"),
+        Health   = Drawing.new("Text"),
+        Distance = Drawing.new("Text"),
+        Weapon   = Drawing.new("Text"),
+        Tracer   = Drawing.new("Line"),
+        TracerTop = Drawing.new("Line"),
+    }
+    d.Box.Thickness = 1
+    d.Box.Filled = false
+    d.Box.Transparency = 1
+    d.Box.Color = Color3.fromRGB(255, 0, 0)
+    d.Name.Size = 14
+    d.Name.Center = true
+    d.Name.Outline = true
+    d.Name.Color = Color3.fromRGB(255, 255, 255)
+    d.Health.Size = 12
+    d.Health.Outline = true
+    d.Health.Color = Color3.fromRGB(0, 255, 0)
+    d.Distance.Size = 12
+    d.Distance.Center = true
+    d.Distance.Outline = true
+    d.Distance.Color = Color3.fromRGB(255, 255, 0)
+    d.Weapon.Size = 12
+    d.Weapon.Center = true
+    d.Weapon.Outline = true
+    d.Weapon.Color = Color3.fromRGB(0, 200, 255)
+    d.Tracer.Thickness = 1
+    d.Tracer.Color = Color3.fromRGB(255, 0, 0)
+    d.TracerTop.Thickness = 1
+    d.TracerTop.Color = Color3.fromRGB(255, 0, 0)
+    for _, o in pairs(d) do o.Visible = false end
+    ESP_Cache[p] = d
+    return d
+end
+
+local function ESP_hide(p)
+    local d = ESP_Cache[p]
+    if not d then return end
+    for _, o in pairs(d) do o.Visible = false end
+end
+
+local function ESP_start()
+    if ESP_Conn then ESP_Conn:Disconnect() end
+    ESP_Conn = RunService.RenderStepped:Connect(function()
+        if not ESP_CFG.Enabled then ESP_clean() return end
+        local cam = workspace.CurrentCamera
+        if not cam then return end
+        local mePos = cam.CFrame.Position
+
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p == LocalPlayer then continue end
+
+            if ESP_CFG.UseWhitelist and not ESP_isWhitelisted(p) then
+                ESP_hide(p) continue
+            end
+
+            local c  = p.Character
+            local h  = c and c:FindFirstChildOfClass("Humanoid")
+            local r  = c and c:FindFirstChild("HumanoidRootPart")
+            local hd = c and c:FindFirstChild("Head")
+
+            if not (h and r and hd and h.Health > 0) then
+                ESP_hide(p) continue
+            end
+
+            local rp, onScr = cam:WorldToViewportPoint(r.Position)
+            local hp        = cam:WorldToViewportPoint(hd.Position + Vector3.new(0, 0.6, 0))
+            if not onScr then ESP_hide(p) continue end
+
+            local d  = ESP_new(p)
+            local hh = math.abs(rp.Y - hp.Y) * 2.4
+            local ww = hh * 0.55
+            local tl = Vector2.new(rp.X - ww / 2, rp.Y - hh / 2)
+
+            if ESP_CFG.Box then
+                d.Box.Visible  = true
+                d.Box.Size     = Vector2.new(ww, hh)
+                d.Box.Position = tl
+                d.Box.Color    = Color3.fromRGB(255, 0, 0)
+            else d.Box.Visible = false end
+
+            if ESP_CFG.Name then
+                d.Name.Visible  = true
+                d.Name.Position = Vector2.new(rp.X, tl.Y - 18)
+                d.Name.Text     = p.DisplayName .. " (@" .. p.Name .. ")"
+            else d.Name.Visible = false end
+
+            if ESP_CFG.Health then
+                d.Health.Visible  = true
+                d.Health.Position = Vector2.new(tl.X - 44, tl.Y)
+                d.Health.Text     = string.format("HP:%d", math.floor(h.Health + 0.5))
+            else d.Health.Visible = false end
+
+            if ESP_CFG.Distance then
+                d.Distance.Visible  = true
+                local dist = (r.Position - mePos).Magnitude
+                d.Distance.Position = Vector2.new(rp.X, tl.Y + hh + 4)
+                d.Distance.Text     = string.format("[%dm]", math.floor(dist))
+            else d.Distance.Visible = false end
+
+            if ESP_CFG.Weapon then
+                local wpn = ESP_getWeapon(p)
+                if wpn ~= "" then
+                    d.Weapon.Visible  = true
+                    d.Weapon.Position = Vector2.new(rp.X, tl.Y + hh + 20)
+                    d.Weapon.Text     = "[" .. wpn .. "]"
+                else d.Weapon.Visible = false end
+            else d.Weapon.Visible = false end
+
+            if ESP_CFG.Tracer then
+                d.Tracer.Visible = true
+                d.Tracer.From    = Vector2.new(cam.ViewportSize.X / 2, cam.ViewportSize.Y)
+                d.Tracer.To      = Vector2.new(rp.X, rp.Y)
+                d.Tracer.Color   = Color3.fromRGB(255, 0, 0)
+            else d.Tracer.Visible = false end
+
+            if ESP_CFG.TracerTop then
+                d.TracerTop.Visible = true
+                d.TracerTop.From    = Vector2.new(cam.ViewportSize.X / 2, 0)
+                d.TracerTop.To      = Vector2.new(rp.X, rp.Y)
+                d.TracerTop.Color   = Color3.fromRGB(255, 0, 0)
+            else d.TracerTop.Visible = false end
+        end
+    end)
+end
+
+EspTab:Toggle({
+    Title = "ESP 总开关（必开！！！）",
+    Desc = "不开这个下面的功能全都无效",
+    Value = false,
+    Callback = function(s)
+        ESP_CFG.Enabled = s
+        if s then ESP_start() else ESP_clean() end
+    end,
+})
+
+EspTab:Toggle({
+    Title = "方框 ESP（把所有玩家框住）",
+    Desc = "在玩家身上画红色方框",
+    Value = false,
+    Callback = function(s) ESP_CFG.Box = s end,
+})
+
+EspTab:Toggle({
+    Title = "名字显示（显示对方初始名与修改名）",
+    Desc = "显示 DisplayName 和用户名",
+    Value = false,
+    Callback = function(s) ESP_CFG.Name = s end,
+})
+
+EspTab:Toggle({
+    Title = "血量显示（显示敌人血量）",
+    Desc = "显示对方当前 HP",
+    Value = false,
+    Callback = function(s) ESP_CFG.Health = s end,
+})
+
+EspTab:Toggle({
+    Title = "距离显示（显示敌人与自身玩家距离）",
+    Desc = "显示对方与自己相距多少米",
+    Value = false,
+    Callback = function(s) ESP_CFG.Distance = s end,
+})
+
+EspTab:Toggle({
+    Title = "手持武器显示（显示敌人手上拿的什么武器）",
+    Desc = "显示对方当前装备的 Tool",
+    Value = false,
+    Callback = function(s) ESP_CFG.Weapon = s end,
+})
+
+EspTab:Toggle({
+    Title = "追踪线（下天线）",
+    Desc = "从屏幕【底部中间】连接到玩家的线",
+    Value = false,
+    Callback = function(s) ESP_CFG.Tracer = s end,
+})
+
+EspTab:Toggle({
+    Title = "上天线",
+    Desc = "从屏幕【顶部中间】连接到玩家的线",
+    Value = false,
+    Callback = function(s) ESP_CFG.TracerTop = s end,
+})
+
+EspTab:Divider()
+EspTab:Paragraph({ Title = "🎯 白名单", Desc = "开启后【只透视白名单里的玩家】" })
+
+EspTab:Toggle({
+    Title = "启用白名单",
+    Desc = "开启后，只透视白名单里的玩家",
+    Value = false,
+    Callback = function(s)
+        ESP_CFG.UseWhitelist = s
+        WindUI:Notify({
+            Title = "🎯 白名单",
+            Content = s and "已启用（只透视白名单玩家）" or "已关闭（透视所有人）",
+            Duration = 2,
+            Icon = "users",
+        })
+    end,
+})
+
+EspTab:Button({
+    Title = "➕ 添加白名单（点击打开玩家列表）",
+    Desc = "弹窗列出服务器内所有玩家，点击添加/移除",
+    Callback = function()
+        local old = LocalPlayer.PlayerGui:FindFirstChild("ShenWhitelistPopup")
+        if old then old:Destroy() end
+
+        local popupGui = Instance.new("ScreenGui")
+        popupGui.Name = "ShenWhitelistPopup"
+        popupGui.ResetOnSpawn = false
+        popupGui.IgnoreGuiInset = true
+        popupGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        popupGui.DisplayOrder = 1000
+        popupGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+        local bg = Instance.new("TextButton")
+        bg.Size = UDim2.new(1, 0, 1, 0)
+        bg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        bg.BackgroundTransparency = 0.5
+        bg.Text = ""
+        bg.AutoButtonColor = false
+        bg.BorderSizePixel = 0
+        bg.ZIndex = 1
+        bg.Parent = popupGui
+
+        local frame = Instance.new("Frame")
+        frame.AnchorPoint = Vector2.new(0.5, 0.5)
+        frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+        frame.Size = UDim2.fromOffset(400, 480)
+        frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        frame.BorderSizePixel = 0
+        frame.ZIndex = 2
+        frame.Parent = popupGui
+
+        local frameCorner = Instance.new("UICorner")
+        frameCorner.CornerRadius = UDim.new(0, 10)
+        frameCorner.Parent = frame
+
+        local frameStroke = Instance.new("UIStroke")
+        frameStroke.Color = Color3.fromRGB(0, 150, 255)
+        frameStroke.Thickness = 1.5
+        frameStroke.Transparency = 0.2
+        frameStroke.Parent = frame
+
+        local titleBar = Instance.new("TextLabel")
+        titleBar.Size = UDim2.new(1, -80, 0, 40)
+        titleBar.Position = UDim2.new(0, 12, 0, 6)
+        titleBar.BackgroundTransparency = 1
+        titleBar.Font = Enum.Font.GothamBold
+        titleBar.TextSize = 15
+        titleBar.TextXAlignment = Enum.TextXAlignment.Left
+        titleBar.TextColor3 = Color3.fromRGB(100, 200, 255)
+        titleBar.Text = "🎯 选择白名单玩家（点击切换）"
+        titleBar.ZIndex = 3
+        titleBar.Parent = frame
+
+        local closeBtn = Instance.new("TextButton")
+        closeBtn.Size = UDim2.fromOffset(28, 28)
+        closeBtn.Position = UDim2.new(1, -38, 0, 8)
+        closeBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+        closeBtn.Text = "×"
+        closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        closeBtn.Font = Enum.Font.GothamBold
+        closeBtn.TextSize = 18
+        closeBtn.AutoButtonColor = true
+        closeBtn.BorderSizePixel = 0
+        closeBtn.ZIndex = 5
+        closeBtn.Active = true
+        closeBtn.Parent = frame
+
+        local closeCorner = Instance.new("UICorner")
+        closeCorner.CornerRadius = UDim.new(0, 6)
+        closeCorner.Parent = closeBtn
+
+        local scroll = Instance.new("ScrollingFrame")
+        scroll.Size = UDim2.new(1, -20, 1, -60)
+        scroll.Position = UDim2.new(0, 10, 0, 50)
+        scroll.BackgroundTransparency = 1
+        scroll.BorderSizePixel = 0
+        scroll.ScrollBarThickness = 6
+        scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+        scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        scroll.ZIndex = 3
+        scroll.Parent = frame
+
+        local listLayout = Instance.new("UIListLayout")
+        listLayout.Padding = UDim.new(0, 6)
+        listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        listLayout.Parent = scroll
+
+        local closed = false
+        local function closePopup()
+            if closed then return end
+            closed = true
+            pcall(function() popupGui:Destroy() end)
+        end
+
+        closeBtn.MouseButton1Click:Connect(closePopup)
+        bg.MouseButton1Click:Connect(closePopup)
+
+        local escConn
+        escConn = UserInputService.InputBegan:Connect(function(input, gpe)
+            if gpe then return end
+            if input.KeyCode == Enum.KeyCode.Escape then
+                closePopup()
+                if escConn then escConn:Disconnect() end
+            end
+        end)
+        popupGui.Destroying:Connect(function()
+            if escConn then pcall(function() escConn:Disconnect() end) end
+        end)
+
+        local function rebuildList()
+            for _, c in ipairs(scroll:GetChildren()) do
+                if c:IsA("Frame") or c:IsA("TextButton") then c:Destroy() end
+            end
+            local any = false
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer then
+                    any = true
+                    local isWL = ESP_isWhitelisted(p)
+
+                    local row = Instance.new("TextButton")
+                    row.Size = UDim2.new(1, 0, 0, 44)
+                    row.BackgroundColor3 = isWL and Color3.fromRGB(0, 130, 220) or Color3.fromRGB(45, 45, 45)
+                    row.BorderSizePixel = 0
+                    row.AutoButtonColor = true
+                    row.Text = ""
+                    row.ZIndex = 3
+                    row.Parent = scroll
+
+                    local rowCorner = Instance.new("UICorner")
+                    rowCorner.CornerRadius = UDim.new(0, 6)
+                    rowCorner.Parent = row
+
+                    local avatar = Instance.new("ImageLabel")
+                    avatar.Size = UDim2.fromOffset(32, 32)
+                    avatar.Position = UDim2.new(0, 8, 0.5, -16)
+                    avatar.BackgroundTransparency = 1
+                    avatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(p.UserId) .. "&w=150&h=150"
+                    avatar.ZIndex = 4
+                    avatar.Parent = row
+                    local avCorner = Instance.new("UICorner")
+                    avCorner.CornerRadius = UDim.new(0, 5)
+                    avCorner.Parent = avatar
+
+                    local nameLbl = Instance.new("TextLabel")
+                    nameLbl.Size = UDim2.new(1, -100, 1, 0)
+                    nameLbl.Position = UDim2.new(0, 50, 0, 0)
+                    nameLbl.BackgroundTransparency = 1
+                    nameLbl.Font = Enum.Font.GothamBold
+                    nameLbl.TextSize = 13
+                    nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+                    nameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    nameLbl.Text = p.DisplayName .. " (@" .. p.Name .. ")"
+                    nameLbl.TextTruncate = Enum.TextTruncate.AtEnd
+                    nameLbl.ZIndex = 4
+                    nameLbl.Parent = row
+
+                    local statusLbl = Instance.new("TextLabel")
+                    statusLbl.AnchorPoint = Vector2.new(1, 0.5)
+                    statusLbl.Position = UDim2.new(1, -8, 0.5, 0)
+                    statusLbl.Size = UDim2.fromOffset(60, 24)
+                    statusLbl.BackgroundTransparency = 1
+                    statusLbl.Font = Enum.Font.GothamBold
+                    statusLbl.TextSize = 12
+                    statusLbl.TextColor3 = isWL and Color3.fromRGB(120, 255, 120) or Color3.fromRGB(180, 180, 180)
+                    statusLbl.Text = isWL and "✔ 已添加" or "点击添加"
+                    statusLbl.ZIndex = 4
+                    statusLbl.Parent = row
+
+                    row.MouseButton1Click:Connect(function()
+                        if ESP_Whitelist[p.UserId] then
+                            ESP_Whitelist[p.UserId] = nil
+                        else
+                            ESP_Whitelist[p.UserId] = true
+                        end
+                        local nowWL = ESP_isWhitelisted(p)
+                        row.BackgroundColor3 = nowWL and Color3.fromRGB(0, 130, 220) or Color3.fromRGB(45, 45, 45)
+                        statusLbl.TextColor3 = nowWL and Color3.fromRGB(120, 255, 120) or Color3.fromRGB(180, 180, 180)
+                        statusLbl.Text = nowWL and "✔ 已添加" or "点击添加"
+                    end)
+                end
+            end
+            if not any then
+                local empty = Instance.new("TextLabel")
+                empty.Size = UDim2.new(1, 0, 0, 40)
+                empty.BackgroundTransparency = 1
+                empty.Font = Enum.Font.Gotham
+                empty.TextSize = 13
+                empty.TextColor3 = Color3.fromRGB(180, 180, 180)
+                empty.Text = "服务器内暂无其他玩家"
+                empty.ZIndex = 3
+                empty.Parent = scroll
+            end
+        end
+
+        rebuildList()
+
+        local connAdded, connRemoved
+        connAdded = Players.PlayerAdded:Connect(function()
+            task.wait(0.5)
+            if popupGui.Parent then rebuildList() end
+        end)
+        connRemoved = Players.PlayerRemoving:Connect(function()
+            task.wait(0.5)
+            if popupGui.Parent then rebuildList() end
+        end)
+        popupGui.Destroying:Connect(function()
+            pcall(function() connAdded:Disconnect() end)
+            pcall(function() connRemoved:Disconnect() end)
+        end)
+    end,
+})
+
+EspTab:Button({
+    Title = "❌ 关闭白名单弹窗",
+    Desc = "强制关闭玩家选择弹窗（如果关不掉就点这个）",
+    Callback = function()
+        local popup = LocalPlayer.PlayerGui:FindFirstChild("ShenWhitelistPopup")
+        if popup then
+            popup:Destroy()
+            WindUI:Notify({ Title = "🎯 白名单", Content = "弹窗已关闭", Duration = 1.5, Icon = "x" })
+        else
+            WindUI:Notify({ Title = "🎯 白名单", Content = "当前没有打开的弹窗", Duration = 1.5, Icon = "info" })
+        end
+    end,
+})
+
+EspTab:Button({
+    Title = "🗑️ 清空白名单",
+    Desc = "移除白名单中的所有玩家",
+    Callback = function()
+        ESP_Whitelist = {}
+        WindUI:Notify({ Title = "🎯 白名单", Content = "已清空", Duration = 2, Icon = "trash" })
+    end,
+})
+
+EspTab:Button({
+    Title = "📋 查看当前白名单",
+    Desc = "显示当前白名单里的玩家",
+    Callback = function()
+        local names = {}
+        for uid, _ in pairs(ESP_Whitelist) do
+            local ok, p = pcall(function()
+                return Players:GetPlayerByUserId(uid)
+            end)
+            if ok and p then
+                table.insert(names, p.DisplayName .. " (@" .. p.Name .. ")")
+            else
+                table.insert(names, "UserId: " .. tostring(uid) .. "（已离开）")
+            end
+        end
+        local text = #names > 0 and table.concat(names, "\n") or "（空）"
+        WindUI:Notify({
+            Title = "🎯 当前白名单（" .. #names .. " 人）",
+            Content = text,
+            Duration = 5,
+            Icon = "list",
+        })
+    end,
+})
+
+-- ===== 视角设置 标签（占位，暂未添加功能）=====
+local ViewTab = Window:Tab({ Title = "视角设置", Icon = "camera" })
+
+ViewTab:Paragraph({
+    Title = "📷 视角设置",
+    Desc = "功能开发中，敬请期待",
+    Image = "camera",
+    ImageSize = 20,
 })
 
 --============================================================
@@ -3325,8 +3495,7 @@ Players.PlayerAdded:Connect(function(player)
 end)
 
 Players.PlayerRemoving:Connect(function(player)
-    if not getgenv().PlayerNotifyEnabled then return end
-    local count = #Players:GetPlayers() - 1
+    if not getgenv().PlayerNotifyEnabled then return end    local count = #Players:GetPlayers() - 1
     if count < 0 then count = 0 end
     createNotify("游戏通知", "当前服务器玩家人数：" .. count .. "\n" .. player.Name .. " 离开了游戏", 5, nil, player.UserId)
 end)
