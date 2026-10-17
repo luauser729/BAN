@@ -107,32 +107,35 @@ local function registerSearchable(f, k) table.insert(searchRegistry, {frame=f, k
 
 local topBar = new("Frame", {Size=UDim2.new(1,0,0,36), Position=UDim2.new(0,0,0,40), BackgroundColor3=WHITE_BG, BorderSizePixel=0, ZIndex=2, Parent=window}, {corner(14)})
 new("Frame", {Size=UDim2.new(1,0,0,12), Position=UDim2.new(0,0,1,-12), BackgroundColor3=WHITE_BG, BorderSizePixel=0, ZIndex=2, Parent=topBar})
-local title = new("TextLabel", {Size=UDim2.new(1,-140,1,0), Position=UDim2.fromOffset(16,0), BackgroundTransparency=1, Text="神 HUB", TextColor3=PRIMARY, Font=Enum.Font.GothamBold, TextSize=15, TextXAlignment=Enum.TextXAlignment.Left, ZIndex=3, Parent=topBar})
+local title = new("TextLabel", {Size=UDim2.fromOffset(60,36), Position=UDim2.fromOffset(16,0), BackgroundTransparency=1, Text="神 HUB", TextColor3=PRIMARY, Font=Enum.Font.GothamBold, TextSize=15, TextXAlignment=Enum.TextXAlignment.Left, ZIndex=3, Parent=topBar})
 registerThemeTarget(title, "text")
 local titleAccent = new("Frame", {Size=UDim2.new(0,50,0,2), Position=UDim2.new(0,16,1,-4), BackgroundColor3=PRIMARY, BorderSizePixel=0, ZIndex=3, Parent=topBar}, {corner(1)})
 registerThemeTarget(titleAccent, "fill")
 local closeBtn = new("TextButton", {Size=UDim2.fromOffset(26,26), Position=UDim2.new(1,-34,0.5,-13), BackgroundColor3=SOFT_BG, Text="X", TextColor3=PRIMARY, Font=Enum.Font.GothamBold, TextSize=13, AutoButtonColor=false, ZIndex=3, Parent=topBar}, {corner(6), stroke(PRIMARY, 1, 0.6)})
 registerThemeTarget(closeBtn, "text")
 
-local sidebar = new("ScrollingFrame", {
-    Size=UDim2.new(0,110,1,-76), Position=UDim2.new(0,0,0,76),
-    BackgroundColor3=WHITE_BG, BorderSizePixel=0, ZIndex=2, ScrollBarThickness=4, ScrollBarImageColor3=PRIMARY,
-    ScrollingDirection=Enum.ScrollingDirection.Y, CanvasSize=UDim2.new(0,0,0,0), AutomaticCanvasSize=Enum.AutomaticSize.Y, Parent=window,
-}, {padding(8), new("UIListLayout", {Padding=UDim.new(0,6), SortOrder=Enum.SortOrder.LayoutOrder})})
-
-local content = new("ScrollingFrame", {
-    Size=UDim2.new(1,-110,1,-76), Position=UDim2.new(0,110,0,76),
-    BackgroundTransparency=1, BorderSizePixel=0, ScrollBarThickness=4, ScrollBarImageColor3=PRIMARY,
-    CanvasSize=UDim2.new(0,0,0,0), ZIndex=2, Parent=window,
-}, {padding(12), new("UIListLayout", {Padding=UDim.new(0,10), SortOrder=Enum.SortOrder.LayoutOrder})})
-content.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    safe(function() content.CanvasSize = UDim2.new(0,0,0, content.UIListLayout.AbsoluteContentSize.Y + 24) end)
-end)
-
-local playerCard = new("TextButton", {Name="PlayerCard", Size=UDim2.fromOffset(100,44), Position=UDim2.new(0,8,1,-52), BackgroundColor3=WHITE_BG, Text="", AutoButtonColor=false, ZIndex=10, Parent=window}, {corner(8), stroke(PRIMARY, 1.2, 0.5)})
-local avatar = new("ImageLabel", {Name="Avatar", Size=UDim2.fromOffset(32,32), Position=UDim2.new(0,6,0.5,-16), BackgroundColor3=SOFT_BG, Image="", ZIndex=11, Parent=playerCard}, {corner(999)})
-new("TextLabel", {Name="PlayerName", Size=UDim2.new(1,-46,0,16), Position=UDim2.new(0,42,0,8), BackgroundTransparency=1, Text=player.DisplayName or player.Name, TextColor3=TEXT_DARK, Font=Enum.Font.GothamBold, TextSize=11, TextXAlignment=Enum.TextXAlignment.Left, TextTruncate=Enum.TextTruncate.AtEnd, ZIndex=11, Parent=playerCard})
-local pTag = new("TextLabel", {Name="PlayerTag", Size=UDim2.new(1,-46,0,14), Position=UDim2.new(0,42,0,24), BackgroundTransparency=1, Text="@"..player.Name, TextColor3=TEXT_DIM, Font=Enum.Font.GothamMedium, TextSize=10, TextXAlignment=Enum.TextXAlignment.Left, TextTruncate=Enum.TextTruncate.AtEnd, ZIndex=11, Parent=playerCard})
+-- ============ 玩家卡片（移到了顶部） ============
+local playerCard = new("TextButton", {
+    Name="PlayerCard",
+    Size=UDim2.new(1, -125, 0, 36), -- 宽度自适应
+    Position=UDim2.new(0, 80, 0, 0), -- 放在标题后面
+    BackgroundTransparency=1, -- 去掉白底，融入顶部栏
+    Text="", AutoButtonColor=false, ZIndex=10, Parent=topBar
+})
+local avatar = new("ImageLabel", {
+    Name="Avatar", Size=UDim2.fromOffset(24,24), Position=UDim2.new(0,0,0.5,-12), 
+    BackgroundColor3=SOFT_BG, Image="", ZIndex=11, Parent=playerCard
+}, {corner(999)})
+local pName = new("TextLabel", {
+    Name="PlayerName", Size=UDim2.new(1,-36,0,14), Position=UDim2.fromOffset(30,4),
+    BackgroundTransparency=1, Text=player.DisplayName or player.Name, TextColor3=TEXT_DARK, 
+    Font=Enum.Font.GothamBold, TextSize=11, TextXAlignment=Enum.TextXAlignment.Left, TextTruncate=Enum.TextTruncate.AtEnd, ZIndex=11, Parent=playerCard
+})
+local pTag = new("TextLabel", {
+    Name="PlayerTag", Size=UDim2.new(1,-36,0,12), Position=UDim2.fromOffset(30,18),
+    BackgroundTransparency=1, Text="@"..player.Name, TextColor3=TEXT_DIM, Font=Enum.Font.GothamMedium, 
+    TextSize=10, TextXAlignment=Enum.TextXAlignment.Left, TextTruncate=Enum.TextTruncate.AtEnd, ZIndex=11, Parent=playerCard
+})
 task.spawn(function()
     safe(function()
         avatar.Image = string.format("https://www.roblox.com/headshot-thumbnail/image?userId=%d&width=150&height=150&format=png", player.UserId)
@@ -148,8 +151,22 @@ playerCard.MouseButton1Click:Connect(function()
         task.delay(1.5, function() safe(function() pTag.Text = "@"..player.Name end) end)
     end)
 end)
-playerCard.MouseEnter:Connect(function() safe(function() TweenService:Create(playerCard, TweenInfo.new(0.15), {BackgroundColor3=SOFT_BG}):Play() end) end)
-playerCard.MouseLeave:Connect(function() safe(function() TweenService:Create(playerCard, TweenInfo.new(0.15), {BackgroundColor3=WHITE_BG}):Play() end) end)
+-- =================================================
+
+local sidebar = new("ScrollingFrame", {
+    Size=UDim2.new(0,110,1,-76), Position=UDim2.new(0,0,0,76),
+    BackgroundColor3=WHITE_BG, BorderSizePixel=0, ZIndex=2, ScrollBarThickness=4, ScrollBarImageColor3=PRIMARY,
+    ScrollingDirection=Enum.ScrollingDirection.Y, CanvasSize=UDim2.new(0,0,0,0), AutomaticCanvasSize=Enum.AutomaticSize.Y, Parent=window,
+}, {padding(8), new("UIListLayout", {Padding=UDim.new(0,6), SortOrder=Enum.SortOrder.LayoutOrder})})
+
+local content = new("ScrollingFrame", {
+    Size=UDim2.new(1,-110,1,-76), Position=UDim2.new(0,110,0,76),
+    BackgroundTransparency=1, BorderSizePixel=0, ScrollBarThickness=4, ScrollBarImageColor3=PRIMARY,
+    CanvasSize=UDim2.new(0,0,0,0), ZIndex=2, Parent=window,
+}, {padding(12), new("UIListLayout", {Padding=UDim.new(0,10), SortOrder=Enum.SortOrder.LayoutOrder})})
+content.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    safe(function() content.CanvasSize = UDim2.new(0,0,0, content.UIListLayout.AbsoluteContentSize.Y + 24) end)
+end)
 
 local tabs, activeTab, tabOrder = {}, nil, 0
 local function createTab(name, icon)
@@ -360,6 +377,106 @@ end)
 -- ============ 🧪 内测人员 Tab ============
 local betaTab = createTab("内测人员", "🧪")
 
+-- 【脚本作者】区域
+new("TextLabel", {
+    Size = UDim2.new(1,0,0,20),
+    BackgroundTransparency = 1,
+    Text = "【 脚本作者 】",
+    TextColor3 = PRIMARY,
+    Font = Enum.Font.GothamBold,
+    TextSize = 12,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    LayoutOrder = nextOrder(),
+    Parent = betaTab,
+})
+
+local authorCard = new("Frame", {
+    Size = UDim2.new(1, 0, 0, 76),
+    BackgroundColor3 = CARD_BG,
+    BorderSizePixel = 0,
+    LayoutOrder = nextOrder(),
+    Parent = betaTab,
+}, {corner(10), stroke(PRIMARY, 1.5, 0.4), padding(10)}) -- 边框稍微加粗
+
+local authorAvatarFrame = new("Frame", {
+    Size = UDim2.fromOffset(50, 50),
+    Position = UDim2.new(0, 0, 0.5, -25),
+    BackgroundColor3 = SOFT_BG,
+    Parent = authorCard,
+}, {corner(999), stroke(PRIMARY, 1, 0.5)})
+
+-- 作者头像（填入你提供的 ID）
+local authorAvatar = new("ImageLabel", {
+    Size = UDim2.fromScale(1, 1),
+    BackgroundTransparency = 1,
+    Image = "rbxassetid://73308017224118",
+    ScaleType = Enum.ScaleType.Crop,
+    Visible = true,
+    Parent = authorAvatarFrame,
+}, {corner(999)})
+
+new("TextLabel", {
+    Size = UDim2.new(1, -190, 0, 16),
+    Position = UDim2.fromOffset(60, 0),
+    BackgroundTransparency = 1,
+    Text = "作者",
+    TextColor3 = PRIMARY,
+    Font = Enum.Font.GothamBold,
+    TextSize = 13, -- 字体稍微加大
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Parent = authorCard,
+})
+
+new("TextLabel", {
+    Size = UDim2.new(1, -190, 0, 16),
+    Position = UDim2.fromOffset(60, 18),
+    BackgroundTransparency = 1,
+    Text = "神 (Shen Hub 开发者)",
+    TextColor3 = TEXT_DARK,
+    Font = Enum.Font.GothamMedium,
+    TextSize = 12,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Parent = authorCard,
+})
+
+new("TextLabel", {
+    Size = UDim2.new(1, -190, 0, 16),
+    Position = UDim2.fromOffset(60, 36),
+    BackgroundTransparency = 1,
+    Text = "快手号: 5733022742", -- 更新了这里的文字显示
+    TextColor3 = TEXT_DIM,
+    Font = Enum.Font.GothamMedium,
+    TextSize = 10,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Parent = authorCard,
+})
+
+local copyAuthorKs = new("TextButton", {
+    Size = UDim2.fromOffset(60, 30),
+    Position = UDim2.new(1, -60, 0.5, -15),
+    BackgroundColor3 = PRIMARY,
+    Text = "复制快手",
+    TextColor3 = WHITE_BG,
+    Font = Enum.Font.GothamBold,
+    TextSize = 10,
+    AutoButtonColor = false,
+    Parent = authorCard,
+}, {corner(6)})
+
+copyAuthorKs.MouseButton1Click:Connect(function()
+    safe(function()
+        if setclipboard then
+            setclipboard("5733022742") -- 点击后复制的内容
+            copyAuthorKs.Text = "已复制!"
+            task.delay(1.5, function()
+                safe(function() copyAuthorKs.Text = "复制快手" end)
+            end)
+        end
+    end)
+end)
+
+
+-- 【内测人员】区域
 new("TextLabel", {
     Size = UDim2.new(1,0,0,20),
     BackgroundTransparency = 1,
