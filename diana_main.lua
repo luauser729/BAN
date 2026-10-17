@@ -111,7 +111,7 @@ local title = new("TextLabel", {Size=UDim2.new(1,-140,1,0), Position=UDim2.fromO
 registerThemeTarget(title, "text")
 local titleAccent = new("Frame", {Size=UDim2.new(0,50,0,2), Position=UDim2.new(0,16,1,-4), BackgroundColor3=PRIMARY, BorderSizePixel=0, ZIndex=3, Parent=topBar}, {corner(1)})
 registerThemeTarget(titleAccent, "fill")
-local closeBtn = new("TextButton", {Size=UDim2.fromOffset(26,26), Position=UDim2.new(1,-34,0.5,-13), BackgroundColor3=SOFT_BG, Text="✕", TextColor3=PRIMARY, Font=Enum.Font.GothamBold, TextSize=13, AutoButtonColor=false, ZIndex=3, Parent=topBar}, {corner(6), stroke(PRIMARY, 1, 0.6)})
+local closeBtn = new("TextButton", {Size=UDim2.fromOffset(26,26), Position=UDim2.new(1,-34,0.5,-13), BackgroundColor3=SOFT_BG, Text="X", TextColor3=PRIMARY, Font=Enum.Font.GothamBold, TextSize=13, AutoButtonColor=false, ZIndex=3, Parent=topBar}, {corner(6), stroke(PRIMARY, 1, 0.6)})
 registerThemeTarget(closeBtn, "text")
 
 local sidebar = new("ScrollingFrame", {
@@ -222,7 +222,6 @@ local function makeButton(parent, opts)
     return btn
 end
 
--- ✅ 修复滑条：支持鼠标 + 触摸拖动
 local function makeSlider(parent, opts)
     local min, max, value = opts.Min or 0, opts.Max or 100, opts.Default or 0
     local row = new("Frame", {Size=UDim2.new(1,0,0,52), BackgroundColor3=CARD_BG, BorderSizePixel=0, LayoutOrder=nextOrder(), Parent=parent}, {corner(8), stroke(PRIMARY, 1, 0.7), padding(10)})
@@ -357,6 +356,163 @@ UIS.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     safe(function() if input.KeyCode == Enum.KeyCode.F then setWindowVisible(not window.Visible) end end)
 end)
+
+-- ============ 🧪 内测人员 Tab ============
+local betaTab = createTab("内测人员", "🧪")
+
+new("TextLabel", {
+    Size = UDim2.new(1,0,0,20),
+    BackgroundTransparency = 1,
+    Text = "【 内测人员名单 】",
+    TextColor3 = PRIMARY,
+    Font = Enum.Font.GothamBold,
+    TextSize = 12,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    LayoutOrder = nextOrder(),
+    Parent = betaTab,
+})
+
+local betaMembers = {
+    {
+        title = "测试人员",
+        name = "蛋仔派对板栗王",
+        contact = "快手号：5721155297",
+        copyText = "5721155297",
+        qq = "2580525466",
+        -- 这里填入你后台的 ID（注意，如果它是贴花ID且加载不出来，需要换成真正的图片ID）
+        avatar = "rbxassetid://112961077620856",  
+    },
+}
+
+for _, member in ipairs(betaMembers) do
+    local card = new("Frame", {
+        Size = UDim2.new(1, 0, 0, 76),
+        BackgroundColor3 = CARD_BG,
+        BorderSizePixel = 0,
+        LayoutOrder = nextOrder(),
+        Parent = betaTab,
+    }, {corner(10), stroke(PRIMARY, 1, 0.7), padding(10)})
+
+    -- ============ 强制加载图片模式 ============
+    local avatarFrame = new("Frame", {
+        Size = UDim2.fromOffset(50, 50),
+        Position = UDim2.new(0, 0, 0.5, -25),
+        BackgroundColor3 = SOFT_BG, -- 如果图片没加载出来，这里是灰色底，不是丑丑的白底
+        Parent = card,
+    }, {corner(999), stroke(PRIMARY, 1, 0.5)})
+
+    local avatarImg = new("ImageLabel", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1,
+        Image = member.avatar,
+        ScaleType = Enum.ScaleType.Crop,
+        Visible = true,
+        Parent = avatarFrame,
+    }, {corner(999)})
+    -- =========================================
+
+    new("TextLabel", {
+        Size = UDim2.new(1, -190, 0, 16),
+        Position = UDim2.fromOffset(60, 0),
+        BackgroundTransparency = 1,
+        Text = member.title,
+        TextColor3 = PRIMARY,
+        Font = Enum.Font.GothamBold,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = card,
+    })
+
+    new("TextLabel", {
+        Size = UDim2.new(1, -190, 0, 16),
+        Position = UDim2.fromOffset(60, 18),
+        BackgroundTransparency = 1,
+        Text = member.name,
+        TextColor3 = TEXT_DARK,
+        Font = Enum.Font.GothamMedium,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = card,
+    })
+
+    new("TextLabel", {
+        Size = UDim2.new(1, -190, 0, 16),
+        Position = UDim2.fromOffset(60, 36),
+        BackgroundTransparency = 1,
+        Text = member.contact,
+        TextColor3 = TEXT_DIM,
+        Font = Enum.Font.GothamMedium,
+        TextSize = 10,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = card,
+    })
+
+    -- ============ 右侧两个复制按钮 ============
+    
+    -- 复制快手
+    local copyKsBtn = new("TextButton", {
+        Size = UDim2.fromOffset(60, 22),
+        Position = UDim2.new(1, -60, 0.5, 4),
+        BackgroundColor3 = SOFT_BG,
+        Text = "复制快手",
+        TextColor3 = PRIMARY,
+        Font = Enum.Font.GothamBold,
+        TextSize = 10,
+        AutoButtonColor = false,
+        Parent = card,
+    }, {corner(6), stroke(PRIMARY, 1, 0.4)})
+
+    -- 复制 QQ
+    local copyQQBtn = new("TextButton", {
+        Size = UDim2.fromOffset(60, 22),
+        Position = UDim2.new(1, -60, 0.5, -26),
+        BackgroundColor3 = SOFT_BG,
+        Text = "复制 QQ",
+        TextColor3 = PRIMARY,
+        Font = Enum.Font.GothamBold,
+        TextSize = 10,
+        AutoButtonColor = false,
+        Parent = card,
+    }, {corner(6), stroke(PRIMARY, 1, 0.4)})
+
+    -- 按钮动画与点击逻辑
+    for _, btn in ipairs({copyKsBtn, copyQQBtn}) do
+        btn.MouseEnter:Connect(function()
+            safe(function()
+                TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3=PRIMARY, TextColor3=WHITE_BG}):Play()
+            end)
+        end)
+        btn.MouseLeave:Connect(function()
+            safe(function()
+                TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3=SOFT_BG, TextColor3=PRIMARY}):Play()
+            end)
+        end)
+    end
+
+    copyKsBtn.MouseButton1Click:Connect(function()
+        safe(function()
+            if setclipboard then
+                setclipboard(member.copyText)
+                copyKsBtn.Text = "已复制!"
+                task.delay(1.5, function()
+                    safe(function() copyKsBtn.Text = "复制快手" end)
+                end)
+            end
+        end)
+    end)
+
+    copyQQBtn.MouseButton1Click:Connect(function()
+        safe(function()
+            if setclipboard then
+                setclipboard(tostring(member.qq))
+                copyQQBtn.Text = "已复制!"
+                task.delay(1.5, function()
+                    safe(function() copyQQBtn.Text = "复制 QQ" end)
+                end)
+            end
+        end)
+    end)
+end
 
 -- ============ 主页 Tab ============
 local homeTab = createTab("主页", "🏠")
@@ -756,7 +912,6 @@ makeToggle(generalTab, {
                 local behind = hrp.CFrame.Position - hrp.CFrame.LookVector * 10 + Vector3.new(0, 5, 0)
                 cam.CFrame = CFrame.new(behind, hrp.CFrame.Position)
             end
-
             if savedCamType and savedCamType ~= Enum.CameraType.Scriptable then
                 task.wait(0.05)
                 cam.CameraType = savedCamType
@@ -1197,4 +1352,4 @@ task.spawn(function()
     end
 end)
 
-safe(function() tabs["公告"].button.MouseButton1Click:Fire() end)
+safe(function() tabs["内测人员"].button.MouseButton1Click:Fire() end)
