@@ -16,7 +16,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 -- =========================================================
 -- 🖼️ 免责声明弹窗（在脚本加载前强制阻断）
 -- =========================================================
-local allowedToLoad = false
+local loadTrigger = Instance.new("BindableEvent")
 local popupGui = Instance.new("ScreenGui")
 popupGui.Name = "AutoImagePopupUI"
 popupGui.ResetOnSpawn = false
@@ -51,11 +51,11 @@ stroke.Thickness = 2
 stroke.Parent = frame
 
 local img = Instance.new("ImageLabel")
-img.Size = UDim2.new(1, -10, 1, -80) -- 留出下面文字的空间
+img.Size = UDim2.new(1, -10, 1, -80)
 img.Position = UDim2.new(0.5, 0, 0, 5)
 img.AnchorPoint = Vector2.new(0.5, 0)
 img.BackgroundTransparency = 1
-img.Image = "rbxassetid://120477606610755" -- 你的图片ID
+img.Image = "rbxassetid://120477606610755"
 img.ScaleType = Enum.ScaleType.Fit
 img.ZIndex = 3
 img.Parent = frame
@@ -64,7 +64,6 @@ local imgCorner = Instance.new("UICorner")
 imgCorner.CornerRadius = UDim.new(0, 8)
 imgCorner.Parent = img
 
--- 警告文字
 local warnText = Instance.new("TextLabel")
 warnText.Size = UDim2.new(1, -20, 0, 30)
 warnText.Position = UDim2.new(0.5, 0, 1, -70)
@@ -78,7 +77,6 @@ warnText.TextWrapped = true
 warnText.ZIndex = 4
 warnText.Parent = frame
 
--- 按钮容器
 local btnContainer = Instance.new("Frame")
 btnContainer.Size = UDim2.new(1, -40, 0, 30)
 btnContainer.Position = UDim2.new(0.5, 0, 1, -35)
@@ -122,16 +120,13 @@ local noCorner = Instance.new("UICorner")
 noCorner.CornerRadius = UDim.new(0, 6)
 noCorner.Parent = btnNo
 
--- 交互逻辑
-local loadTrigger = Instance.new("BindableEvent")
-
 btnYes.MouseButton1Click:Connect(function()
-    popupGui:Destroy() -- 关闭弹窗
-    loadTrigger:Fire() -- 触发加载信号
+    popupGui:Destroy()
+    loadTrigger:Fire()
 end)
 
 btnNo.MouseButton1Click:Connect(function()
-    popupGui:Destroy() -- 直接关闭，后面代码全都不会执行
+    popupGui:Destroy()
     game:GetService("StarterGui"):SetCore("SendNotification", {
         Title = "已取消",
         Text = "脚本已停止加载",
@@ -139,11 +134,10 @@ btnNo.MouseButton1Click:Connect(function()
     })
 end)
 
--- 阻塞等待：如果没点“是”，代码就会永远卡在这里不往下走
 loadTrigger.Event:Wait()
 
 -- =========================================================
--- 以下为原脚本核心逻辑（只有点击了“是”才会执行到这里）
+-- 原脚本核心逻辑
 -- =========================================================
 
 local function safe(fn, ...)
@@ -234,9 +228,6 @@ task.spawn(function()
         task.wait(1)
     end
 end)
-
-local searchRegistry = {}
-local function registerSearchable(f, k) table.insert(searchRegistry, {frame=f, keyword=k:lower()}) end
 
 local topBar = new("Frame", {Size=UDim2.new(1,0,0,36), Position=UDim2.new(0,0,0,40), BackgroundColor3=WHITE_BG, BorderSizePixel=0, ZIndex=2, Parent=window}, {corner(14)})
 new("Frame", {Size=UDim2.new(1,0,0,12), Position=UDim2.new(0,0,1,-12), BackgroundColor3=WHITE_BG, BorderSizePixel=0, ZIndex=2, Parent=topBar})
@@ -836,7 +827,6 @@ makeButton(homeTab, {Title="退出服务器", Callback=function() safe(function(
 -- ============ 通用 Tab ============
 local generalTab = createTab("通用", "⚙")
 
--- 原有通用功能
 local spinEnabled, spinValue, spinConn = false, 40, nil
 local function getHum()
     local char = player.Character
@@ -923,80 +913,720 @@ makeToggle(generalTab, {Title="穿墙", Value=false, Callback=function(s) safe(f
                 end
             end)
         end)
+    else
+        local char = player.Character
+        if char then 
+            for _, p in ipairs(char:GetDescendants()) do 
+                if p:IsA("BasePart") then p.CanCollide = true end 
+            end 
+        end
     end
 end) end})
 makeButton(generalTab, {Title="神飞行", Callback=function() safe(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/luauser729/bbb/main/shen.lua"))() end) end})
 makeButton(generalTab, {Title="触碰甩飞", Callback=function() safe(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/luauser729/roblox-scri/main/123"))() end) end})
 makeButton(generalTab, {Title="🚗 坐标飞车", Callback=function() safe(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/luauser729/roblox-1/main/6"))() end) end})
+-- ========= 新加的：爬墙 =========
+do
+    local climbEnabled = false
+    local climbSpeed = 25          -- 爬墙上升速度
+    local climbConn = nil
+
+    local function stopClimb()
+        if climbConn then climbConn:Disconnect() climbConn = nil end
+    end
+
+    local function startClimb()
+        stopClimb()
+        if not climbEnabled then return end
+
+        climbConn = RunService.Heartbeat:Connect(function(dt)
+            safe(function()
+                if not climbEnabled then return end
+
+                local char = player.Character
+                if not char then return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if not hrp or not hum then return end
+                if hum.Health <= 0 then return end
+
+                -- 判断是否贴着墙：从角色中心朝「当前朝向」发射一条短射线
+                local look = hrp.CFrame.LookVector
+                local origin = hrp.Position
+                local rayParams = RaycastParams.new()
+                rayParams.FilterType = Enum.RaycastFilterType.Exclude
+                rayParams.FilterDescendantsInstances = {char}
+
+                -- 稍微向下斜一点检测，避免只检测到头顶空气
+                local dir = (look * 2 + Vector3.new(0, -0.2, 0)).Unit
+                local hit = workspace:Raycast(origin, dir * 2.5, rayParams)
+
+                if hit and hit.Normal.Y < 0.6 then
+                    -- 贴墙：给一个向上的速度
+                    local vel = hrp.AssemblyLinearVelocity
+                    hrp.AssemblyLinearVelocity = Vector3.new(vel.X, climbSpeed, vel.Z)
+                end
+            end)
+        end)
+    end
+
+    makeToggle(generalTab, {
+        Title = "🧗 爬墙",
+        Value = false,
+        Callback = function(s)
+            safe(function()
+                climbEnabled = s
+                if s then startClimb() else stopClimb() end
+            end)
+        end,
+    })
+
+    makeSlider(generalTab, {
+        Title = "爬墙速度",
+        Min = 5,
+        Max = 100,
+        Default = 25,
+        Callback = function(v)
+            safe(function() climbSpeed = v end)
+        end,
+    })
+
+    -- 死亡重生后自动恢复
+    player.CharacterAdded:Connect(function()
+        if climbEnabled then
+            task.wait(0.5)
+            startClimb()
+        end
+    end)
+end
+-- ========= 新加的：吸人 =========
+do
+    local attractEnabled = false
+    local attractAll = false              -- 是否吸附全服
+    local attractTargets = {}             -- 被吸附的玩家 [Player] = true
+    local attractHeight = 5               -- 吸附在头顶上方多少格
+    local attractConn = nil
+
+    -- 顶部的「吸附全」开关
+    local allToggle
+    allToggle = makeToggle(generalTab, {
+        Title = "🧲 吸附全部（吸全服所有人）",
+        Value = false,
+        Callback = function(s)
+            safe(function()
+                attractAll = s
+                if s then
+                    -- 勾选全服时清空单独列表选择
+                    attractTargets = {}
+                end
+            end)
+        end,
+    })
+
+    -- 选择玩家下拉（多选模拟：点一个加入/移除）
+    local attractDropdown = makeDropdown(generalTab, {
+        Title = "🎯 选择吸附玩家（点击切换）",
+        Options = {},
+        Value = "点击选择",
+        Callback = function(label)
+            safe(function()
+                local target = nil
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if p ~= player then
+                        local tag = p.DisplayName .. " (@" .. p.Name .. ")"
+                        if label == tag or label == p.Name or label == p.DisplayName then
+                            target = p
+                            break
+                        end
+                    end
+                end
+                if not target then return end
+                if attractTargets[target] then
+                    attractTargets[target] = nil
+                    print("[吸人] 取消吸附: " .. target.Name)
+                else
+                    attractTargets[target] = true
+                    print("[吸人] 添加吸附: " .. target.Name)
+                end
+                -- 显示当前选中数量
+                local count = 0
+                for _ in pairs(attractTargets) do count = count + 1 end
+                attractDropdown.SetValue("已选 " .. count .. " 人")
+            end)
+        end,
+    })
+
+    -- 刷新玩家列表
+    local function refreshAttractList()
+        safe(function()
+            local names = {}
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= player then
+                    local mark = attractTargets[p] and "✅ " or ""
+                    table.insert(names, mark .. p.DisplayName .. " (@" .. p.Name .. ")")
+                end
+            end
+            if #names == 0 then names = {"（暂无其他玩家）"} end
+            attractDropdown.SetValues(names)
+        end)
+    end
+    refreshAttractList()
+    _G._shenRefreshAttractList = refreshAttractList
+
+    Players.PlayerAdded:Connect(function() task.wait(0.5); refreshAttractList() end)
+    Players.PlayerRemoving:Connect(function(p)
+        safe(function()
+            attractTargets[p] = nil
+            task.wait(0.3)
+            refreshAttractList()
+        end)
+    end)
+
+    makeButton(generalTab, {Title="🔄 刷新吸人列表", Callback=function() safe(function()
+        refreshAttractList()
+    end) end})
+
+    makeButton(generalTab, {Title="❌ 清空已选吸附玩家", Callback=function() safe(function()
+        attractTargets = {}
+        attractDropdown.SetValue("点击选择")
+        refreshAttractList()
+    end) end})
+
+    makeSlider(generalTab, {Title="吸人高度（头顶上方格数）", Min=1, Max=30, Default=5, Callback=function(v) safe(function()
+        attractHeight = v
+    end) end})
+
+    -- 吸附核心逻辑
+    local function startAttractLoop()
+        if attractConn then attractConn:Disconnect() attractConn = nil end
+        if not attractEnabled then return end
+        attractConn = RunService.Heartbeat:Connect(function()
+            safe(function()
+                if not attractEnabled then return end
+                local myChar = player.Character
+                local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                if not myHrp then return end
+                local basePos = myHrp.Position + Vector3.new(0, attractHeight, 0)
+
+                local function pullOne(targetPlayer)
+                    if targetPlayer == player then return end
+                    local tChar = targetPlayer.Character
+                    if not tChar then return end
+                    local tHrp = tChar:FindFirstChild("HumanoidRootPart")
+                    if not tHrp then return end
+                    -- 把对方吸到头顶
+                    tHrp.CFrame = CFrame.new(basePos)
+                end
+
+                if attractAll then
+                    for _, p in ipairs(Players:GetPlayers()) do
+                        if p ~= player then pullOne(p) end
+                    end
+                else
+                    for p, _ in pairs(attractTargets) do
+                        if p and p.Parent then pullOne(p) end
+                    end
+                end
+            end)
+        end)
+    end
+
+    -- 吸人开关
+    makeToggle(generalTab, {
+        Title = "🧲 开启吸人",
+        Value = false,
+        Callback = function(s)
+            safe(function()
+                attractEnabled = s
+                startAttractLoop()
+            end)
+        end,
+    })
+
+    -- 死亡重生后自动恢复
+    player.CharacterAdded:Connect(function()
+        if attractEnabled then
+            task.wait(0.5)
+            startAttractLoop()
+        end
+    end)
+end
+-- ========= 新加的：跟随玩家 =========
+do
+    local followEnabled = false
+    local followTarget = nil
+    local followDistance = 6
+    local followConn = nil
+
+    local function findPlayerByLabel(label)
+        if not label then return nil end
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= player then
+                local tag = p.DisplayName .. " (@" .. p.Name .. ")"
+                if label == tag or label == p.Name or label == p.DisplayName then
+                    return p
+                end
+            end
+        end
+        return nil
+    end
+
+    -- 先放开关、滑块、按钮
+    makeToggle(generalTab, {Title="🚶 跟随玩家", Value=false, Callback=function(s) safe(function()
+        followEnabled = s
+        if s then
+            if not followTarget then
+                print("[跟随] 请先选择目标玩家")
+                followEnabled = false
+                return
+            end
+            if followConn then followConn:Disconnect() followConn = nil end
+            followConn = RunService.Heartbeat:Connect(function()
+                safe(function()
+                    if not followEnabled then return end
+                    if not followTarget or not followTarget.Parent then return end
+                    local myChar = player.Character
+                    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                    local tChar = followTarget.Character
+                    local tHrp = tChar and tChar:FindFirstChild("HumanoidRootPart")
+                    if not myHrp or not tHrp then return end
+                    local tPos = tHrp.Position
+                    local myPos = myHrp.Position
+                    local dir = (myPos - tPos)
+                    local dist = dir.Magnitude
+                    if dist > followDistance + 0.5 then
+                        local targetPos = tPos + (dist > 0.001 and dir.Unit or Vector3.new(1,0,0)) * followDistance
+                        myHrp.CFrame = CFrame.new(targetPos, tPos)
+                    end
+                end)
+            end)
+        else
+            if followConn then followConn:Disconnect() followConn = nil end
+        end
+    end) end})
+
+    makeSlider(generalTab, {Title="跟随距离（格）", Min=2, Max=50, Default=6, Callback=function(v) safe(function()
+        followDistance = v
+    end) end})
+
+    makeButton(generalTab, {Title="🔄 刷新玩家列表", Callback=function() safe(function()
+        if _G._shenRefreshFollowList then _G._shenRefreshFollowList() end
+    end) end})
+
+    -- 最后创建下拉框（放最底部，避免被盖住）
+    local followDropdown = makeDropdown(generalTab, {
+        Title = "👥 选择跟随玩家",
+        Options = {},
+        Value = "点击选择",
+        Callback = function(label)
+            safe(function()
+                followTarget = findPlayerByLabel(label)
+                if followTarget then
+                    print("[跟随] 已选择目标: " .. followTarget.Name)
+                else
+                    print("[跟随] 目标无效")
+                end
+            end)
+        end,
+    })
+
+    -- 提升下拉框父级层级，防止被后续控件遮挡
+    safe(function()
+        local row = followDropdown.row or followDropdown
+        -- makeDropdown 返回的是 table，没有 row；通过 generalTab 最后一个子对象拿到
+        local last = generalTab:FindFirstChild("Frame", true)
+        -- 遍历找到标题为"选择跟随玩家"的控件
+        for _, c in ipairs(generalTab:GetChildren()) do
+            if c:IsA("Frame") then
+                for _, t in ipairs(c:GetDescendants()) do
+                    if t:IsA("TextLabel") and t.Text == "👥 选择跟随玩家" then
+                        c.ZIndex = 9999
+                        for _, d in ipairs(c:GetDescendants()) do
+                            if d:IsA("GuiObject") then d.ZIndex = math.max(d.ZIndex, 9999) end
+                        end
+                        break
+                    end
+                end
+            end
+        end
+    end)
+
+    local function refreshFollowList()
+        safe(function()
+            local names = {}
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= player then
+                    table.insert(names, p.DisplayName .. " (@" .. p.Name .. ")")
+                end
+            end
+            if #names == 0 then names = {"（暂无其他玩家）"} end
+            followDropdown.SetValues(names)
+        end)
+    end
+    refreshFollowList()
+    _G._shenRefreshFollowList = refreshFollowList
+
+    Players.PlayerAdded:Connect(function() task.wait(0.5); refreshFollowList() end)
+    Players.PlayerRemoving:Connect(function(p)
+        safe(function()
+            if followTarget == p then
+                followTarget = nil
+                followEnabled = false
+                if followConn then followConn:Disconnect() followConn = nil end
+                print("[跟随] 目标玩家已离开，跟随已停止")
+            end
+            task.wait(0.3)
+            refreshFollowList()
+        end)
+    end)
+
+    player.CharacterAdded:Connect(function()
+        if followEnabled and followTarget then
+            task.wait(0.5)
+            if followConn then followConn:Disconnect() followConn = nil end
+            followConn = RunService.Heartbeat:Connect(function()
+                safe(function()
+                    if not followEnabled or not followTarget or not followTarget.Parent then return end
+                    local myChar = player.Character
+                    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                    local tChar = followTarget.Character
+                    local tHrp = tChar and tChar:FindFirstChild("HumanoidRootPart")
+                    if not myHrp or not tHrp then return end
+                    local tPos = tHrp.Position
+                    local myPos = myHrp.Position
+                    local dir = (myPos - tPos)
+                    local dist = dir.Magnitude
+                    if dist > followDistance + 0.5 then
+                        local targetPos = tPos + (dist > 0.001 and dir.Unit or Vector3.new(1,0,0)) * followDistance
+                        myHrp.CFrame = CFrame.new(targetPos, tPos)
+                    end
+                end)
+            end)
+        end
+    end)
+end
+-- ========= 新加的：神之传送器（道具） =========
+local function buildGlowTool(name, color, tooltip)
+    local tool = Instance.new("Tool")
+    tool.Name = name
+    tool.RequiresHandle = true
+    tool.CanBeDropped = false
+    tool.ToolTip = tooltip or name
+    local handle = Instance.new("Part")
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(1, 1, 1)
+    handle.Transparency = 0.2
+    handle.Material = Enum.Material.Neon
+    handle.Color = color
+    handle.CanCollide = false
+    handle.Massless = true
+    handle.Parent = tool
+    local light = Instance.new("PointLight")
+    light.Color = color
+    light.Range = 8
+    light.Brightness = 2
+    light.Parent = handle
+    local sel = Instance.new("SelectionBox")
+    sel.Adornee = handle
+    sel.LineThickness = 0.05
+    sel.Color3 = color
+    sel.Parent = handle
+    return tool
+end
+
+local function makeToolManager(toolName, builder, onActivated)
+    local enabled = false
+    local conn = nil
+    local watcher = nil
+    local function give()
+        if not enabled then return end
+        local bp = player:FindFirstChildOfClass("Backpack")
+        if not bp then return end
+        local char = player.Character
+        if bp:FindFirstChild(toolName) then return end
+        if char and char:FindFirstChild(toolName) then return end
+        local tool = builder()
+        tool.Parent = bp
+        if conn then pcall(function() conn:Disconnect() end) end
+        conn = tool.Activated:Connect(function()
+            if not enabled then return end
+            pcall(onActivated, tool)
+        end)
+    end
+    local function remove()
+        local bp = player:FindFirstChildOfClass("Backpack")
+        if bp then
+            local t = bp:FindFirstChild(toolName)
+            if t then t:Destroy() end
+        end
+        local char = player.Character
+        if char then
+            local t = char:FindFirstChild(toolName)
+            if t then t:Destroy() end
+        end
+        if conn then
+            pcall(function() conn:Disconnect() end)
+            conn = nil
+        end
+    end
+    local function startWatch()
+        if watcher then return end
+        watcher = task.spawn(function()
+            while enabled do
+                task.wait(0.5)
+                pcall(give)
+            end
+            watcher = nil
+        end)
+    end
+    player.CharacterAdded:Connect(function()
+        if enabled then
+            task.wait(0.5)
+            give()
+        end
+    end)
+    return {
+        set = function(state)
+            enabled = state
+            if state then
+                give()
+                startWatch()
+            else
+                remove()
+            end
+        end,
+    }
+end
+
+local TP_TOOL_NAME = "神之传送器"
+local tpManager = makeToolManager(
+    TP_TOOL_NAME,
+    function()
+        return buildGlowTool("神之传送器", Color3.fromRGB(0, 180, 255), "拿起点地图任意位置，瞬移过去")
+    end,
+    function()
+        local char = player.Character
+        if not char then return end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        local mouse = player:GetMouse()
+        if not mouse then return end
+        local hit = mouse.Hit
+        if not hit then return end
+        hrp.CFrame = CFrame.new(hit.Position)
+    end
+)
+makeToggle(generalTab, {Title="✨ 传送道具（无距离限制）", Value=false, Callback=function(state) tpManager.set(state) end})
+
+local blinkManager = makeToolManager(
+    "神之传送",
+    function() return buildGlowTool("神之传送", Color3.fromRGB(255, 200, 0), "点击朝鼠标方向瞬移（最多 60 格）") end,
+    function()
+        local char = player.Character
+        if not char then return end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        local mouse = player:GetMouse()
+        if not mouse or not mouse.Hit then return end
+        local from = hrp.Position
+        local to = mouse.Hit.Position
+        local dir = (to - from)
+        local dist = math.min(dir.Magnitude, 60)
+        if dist < 1 then return end
+        hrp.CFrame = CFrame.new(from + dir.Unit * dist + Vector3.new(0, 3, 0))
+    end
+)
+makeToggle(generalTab, {Title="⚡ 神之传送（60米限距）", Value=false, Callback=function(state) blinkManager.set(state) end})
+
+-- ========= 新加的：踏空行走 =========
+local voidWalkEnabled = false
+local voidWalkPart = nil
+local voidWalkConn = nil
+local function removeVoidWalkPart()
+    if voidWalkPart then pcall(function() voidWalkPart:Destroy() end); voidWalkPart = nil end
+end
+local function createVoidWalkPart()
+    removeVoidWalkPart()
+    local p = Instance.new("Part")
+    p.Name = "ShenVoidWalkPlatform"
+    p.Size = Vector3.new(8, 1, 8)
+    p.Anchored = true
+    p.CanCollide = true
+    p.Transparency = 1
+    p.CanQuery = false
+    p.CanTouch = false
+    p.Massless = true
+    p.Parent = workspace
+    voidWalkPart = p
+end
+local function applyVoidWalk()
+    if voidWalkConn then voidWalkConn:Disconnect() voidWalkConn = nil end
+    if not voidWalkEnabled then removeVoidWalkPart(); return end
+    createVoidWalkPart()
+    local lastY = nil
+    voidWalkConn = RunService.Heartbeat:Connect(function()
+        if not voidWalkEnabled then return end
+        local char = player.Character
+        if not char then return end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        if not voidWalkPart or not voidWalkPart.Parent then createVoidWalkPart() end
+        local pos = hrp.Position
+        local isFalling = false
+        if lastY and pos.Y < lastY - 0.15 then isFalling = true end
+        lastY = pos.Y
+        local targetPlatY = isFalling and (pos.Y - 3.5) or voidWalkPart.Position.Y
+        voidWalkPart.CFrame = CFrame.new(pos.X, targetPlatY, pos.Z)
+    end)
+end
+player.CharacterAdded:Connect(function() if voidWalkEnabled then task.wait(0.3); applyVoidWalk() end end)
+
+local function updateVoidWalkQuickUI()
+    if _G._shenVoidWalkQuickBtn then
+        if voidWalkEnabled then
+            _G._shenVoidWalkQuickBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+            _G._shenVoidWalkQuickBtn.Text = "☁️\nON"
+        else
+            _G._shenVoidWalkQuickBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            _G._shenVoidWalkQuickBtn.Text = "☁️\nOFF"
+        end
+    end
+end
+
+makeToggle(generalTab, {Title="☁️ 踏空行走", Value=false, Callback=function(state) voidWalkEnabled = state; applyVoidWalk(); updateVoidWalkQuickUI() end})
+
+-- ========= 新加的：快捷开关悬浮窗 =========
+local quickGui = Instance.new("ScreenGui")
+quickGui.Name = "ShenVoidWalkQuick"
+quickGui.ResetOnSpawn = false
+quickGui.IgnoreGuiInset = true
+quickGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+quickGui.DisplayOrder = 997
+quickGui.Parent = player:WaitForChild("PlayerGui")
+quickGui.Enabled = false -- 已修改：默认关闭快捷弹窗
+
+local quickBtn = Instance.new("TextButton")
+quickBtn.Name = "QuickBtn"
+quickBtn.Size = UDim2.fromOffset(60, 60)
+quickBtn.Position = UDim2.new(0, 20, 0.5, -30)
+quickBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+quickBtn.BackgroundTransparency = 0.15
+quickBtn.Text = "☁️\nOFF"
+quickBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+quickBtn.TextSize = 14
+quickBtn.Font = Enum.Font.GothamBold
+quickBtn.AutoButtonColor = false
+quickBtn.Active = true
+quickBtn.Parent = quickGui
+
+local qCorner = Instance.new("UICorner")
+qCorner.CornerRadius = UDim.new(1, 0)
+qCorner.Parent = quickBtn
+
+local qStroke = Instance.new("UIStroke")
+qStroke.Color = Color3.fromRGB(0, 150, 255)
+qStroke.Thickness = 1.5
+qStroke.Transparency = 0.3
+qStroke.Parent = quickBtn
+
+_G._shenVoidWalkQuickBtn = quickBtn
+
+local qDragging = false
+local qDragStart = nil
+local qStartPos = nil
+local qMoved = false
+
+quickBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        qDragging = true
+        qMoved = false
+        qDragStart = input.Position
+        qStartPos = quickBtn.Position
+    end
+end)
+
+quickBtn.InputChanged:Connect(function(input)
+    if qDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - qDragStart
+        if math.abs(delta.X) > 4 or math.abs(delta.Y) > 4 then qMoved = true end
+        quickBtn.Position = UDim2.new(
+            qStartPos.X.Scale, qStartPos.X.Offset + delta.X,
+            qStartPos.Y.Scale, qStartPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+quickBtn.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if qDragging and not qMoved then
+            voidWalkEnabled = not voidWalkEnabled
+            applyVoidWalk()
+            updateVoidWalkQuickUI()
+        end
+        qDragging = false
+        qDragStart = nil
+        qStartPos = nil
+        qMoved = false
+    end
+end)
+
+makeToggle(generalTab, {Title="🔘 显示踏空快捷按钮", Desc="默认关闭", Value=false, Callback=function(state) quickGui.Enabled = state end})
 
 -- ========= 移到了最下面的：夜视 和 除雾 =========
 local nightVisionEnabled = false
 local nvBrightness = nil
 local nvOutdoorAmbient = nil
 local nvClockTime = nil
-
 makeToggle(generalTab, {
-    Title = "🌙 夜视",
-    Value = false,
-    Callback = function(s)
-        safe(function()
-            nightVisionEnabled = s
-            if nightVisionEnabled then
-                nvBrightness = nvBrightness or Lighting.Brightness
-                nvOutdoorAmbient = nvOutdoorAmbient or Lighting.OutdoorAmbient
-                nvClockTime = nvClockTime or Lighting.ClockTime
-                
-                Lighting.Brightness = 3
-                Lighting.OutdoorAmbient = Color3.fromRGB(180, 180, 180)
-                Lighting.ClockTime = 12
-                Lighting.GlobalShadows = false
-            else
-                Lighting.Brightness = nvBrightness or 1
-                Lighting.OutdoorAmbient = nvOutdoorAmbient or Color3.fromRGB(128, 128, 128)
-                Lighting.ClockTime = nvClockTime or 14
-                Lighting.GlobalShadows = true
-                nvBrightness, nvOutdoorAmbient, nvClockTime = nil, nil, nil
-            end
-        end)
-    end
+    Title = "🌙 夜视", Value = false, Callback = function(s) safe(function()
+        nightVisionEnabled = s
+        if nightVisionEnabled then
+            nvBrightness = nvBrightness or Lighting.Brightness
+            nvOutdoorAmbient = nvOutdoorAmbient or Lighting.OutdoorAmbient
+            nvClockTime = nvClockTime or Lighting.ClockTime
+            Lighting.Brightness = 3
+            Lighting.OutdoorAmbient = Color3.fromRGB(180, 180, 180)
+            Lighting.ClockTime = 12
+            Lighting.GlobalShadows = false
+        else
+            Lighting.Brightness = nvBrightness or 1
+            Lighting.OutdoorAmbient = nvOutdoorAmbient or Color3.fromRGB(128, 128, 128)
+            Lighting.ClockTime = nvClockTime or 14
+            Lighting.GlobalShadows = true
+            nvBrightness, nvOutdoorAmbient, nvClockTime = nil, nil, nil
+        end
+    end) end
 })
-
 local noFogEnabled = false
 local origFogStart, origFogEnd = nil, nil
 local fogConn = nil
-
 makeToggle(generalTab, {
-    Title = "🌫️ 除雾",
-    Value = false,
-    Callback = function(s)
-        safe(function()
-            noFogEnabled = s
-            if noFogEnabled then
-                origFogStart = origFogStart or Lighting.FogStart
-                origFogEnd = origFogEnd or Lighting.FogEnd
-                
-                if fogConn then fogConn:Disconnect() end
-                fogConn = RunService.Heartbeat:Connect(function()
-                    safe(function()
-                        if noFogEnabled then
-                            Lighting.FogEnd = 100000
-                            Lighting.FogStart = 100000
-                            for _, v in pairs(Lighting:GetChildren()) do
-                                if v:IsA("Atmosphere") then v.Density = 0 end
-                                if v:IsA("SunRaysEffect") then v.Intensity = 0 end
-                                if v:IsA("BlurEffect") then v.Size = 0 end
-                            end
+    Title = "🌫️ 除雾", Value = false, Callback = function(s) safe(function()
+        noFogEnabled = s
+        if noFogEnabled then
+            origFogStart = origFogStart or Lighting.FogStart
+            origFogEnd = origFogEnd or Lighting.FogEnd
+            if fogConn then fogConn:Disconnect() end
+            fogConn = RunService.Heartbeat:Connect(function()
+                safe(function()
+                    if noFogEnabled then
+                        Lighting.FogEnd = 100000
+                        Lighting.FogStart = 100000
+                        for _, v in pairs(Lighting:GetChildren()) do
+                            if v:IsA("Atmosphere") then v.Density = 0 end
+                            if v:IsA("SunRaysEffect") then v.Intensity = 0 end
+                            if v:IsA("BlurEffect") then v.Size = 0 end
                         end
-                    end)
+                    end
                 end)
-            else
-                if fogConn then fogConn:Disconnect() fogConn = nil end
-                if origFogStart then Lighting.FogStart = origFogStart end
-                if origFogEnd then Lighting.FogEnd = origFogEnd end
-                origFogStart, origFogEnd = nil, nil
-            end
-        end)
-    end
+            end)
+        else
+            if fogConn then fogConn:Disconnect() fogConn = nil end
+            if origFogStart then Lighting.FogStart = origFogStart end
+            if origFogEnd then Lighting.FogEnd = origFogEnd end
+            origFogStart, origFogEnd = nil, nil
+        end
+    end) end
 })
 
 -- ============ ESP ============
@@ -1081,7 +1711,7 @@ makeToggle(generalTab, {Title="ESP 透视", Value=false, Callback=function(s) sa
     end
 end) end})
 
--- ============ 自由视角（仿森林99夜 WindUI 版） ============
+-- ============ 自由视角 ============
 local freeCamEnabled, freeCamSpeed = false, 50
 local freeCamConn = nil
 local savedCamType, savedCamSubject = nil, nil
@@ -1089,17 +1719,15 @@ local freeCamYaw, freeCamPitch = 0, 0
 local freeCamInputConns = {}
 local freeCamMove = {W=false, A=false, S=false, D=false, Up=false, Down=false}
 local freeCamGui = nil
-
 local function destroyFreeCamUI()
-    if freeCamGui and freeCamGui.Parent then freeCamGui:Destroy() end    freeCamGui = nil
+    if freeCamGui and freeCamGui.Parent then freeCamGui:Destroy() end
+    freeCamGui = nil
 end
-
 local function createFreeCamUI()
     if freeCamGui then return end
     local parentGui = game:GetService("CoreGui")
     local gui = new("ScreenGui", {Name="FreeCamUI", ResetOnSpawn=false, IgnoreGuiInset=true, DisplayOrder=5000, Parent=parentGui})
     freeCamGui = gui
-
     local function makeBtn(text, pos, size, key)
         local btn = new("TextButton", {
             Size = size, Position = pos,
@@ -1122,12 +1750,10 @@ local function createFreeCamUI()
         end)
         return btn
     end
-
     local btnSize = UDim2.fromOffset(56, 56)
     local gap = 62
     local baseX = 30
     local baseY = -220
-
     makeBtn("▲", UDim2.new(0, baseX + gap, 1, baseY - gap), btnSize, "W")
     makeBtn("◀", UDim2.new(0, baseX, 1, baseY), btnSize, "A")
     makeBtn("▼", UDim2.new(0, baseX + gap, 1, baseY), btnSize, "S")
@@ -1135,27 +1761,21 @@ local function createFreeCamUI()
     makeBtn("↑", UDim2.new(1, -80, 1, baseY - gap), UDim2.fromOffset(60, 60), "Up")
     makeBtn("↓", UDim2.new(1, -80, 1, baseY), UDim2.fromOffset(60, 60), "Down")
 end
-
 makeToggle(generalTab, {
-    Title = "📸 自由视角（手机轮盘）",
-    Value = false,
+    Title = "📸 自由视角（手机轮盘）", Value = false,
     Callback = function(state)
         freeCamEnabled = state
         local cam = workspace.CurrentCamera
         if not cam then return end
-
         if state then
             savedCamType = cam.CameraType
             savedCamSubject = cam.CameraSubject
             cam.CameraType = Enum.CameraType.Scriptable
             cam.CameraSubject = nil
-
             local look = cam.CFrame.LookVector
             freeCamYaw = math.deg(math.atan2(-look.X, -look.Z))
             freeCamPitch = math.deg(math.asin(look.Y))
-
             createFreeCamUI()
-
             local rotateTouchId = nil
             local lastTouchPos = nil
             table.insert(freeCamInputConns, UIS.InputBegan:Connect(function(input, gpe)
@@ -1182,24 +1802,20 @@ makeToggle(generalTab, {
                     lastTouchPos = nil
                 end
             end))
-
             freeCamConn = RunService.RenderStepped:Connect(function(dt)
                 if not freeCamEnabled then return end
                 local c = workspace.CurrentCamera
                 if not c then return end
-
                 local rot = CFrame.fromEulerAnglesYXZ(math.rad(freeCamPitch), math.rad(freeCamYaw), 0)
                 local forward = rot.LookVector
                 local right = rot.RightVector
                 local move = Vector3.new(0, 0, 0)
-
                 if freeCamMove.W then move = move + forward end
                 if freeCamMove.S then move = move - forward end
                 if freeCamMove.A then move = move - right end
                 if freeCamMove.D then move = move + right end
                 if freeCamMove.Up then move = move + Vector3.new(0, 1, 0) end
                 if freeCamMove.Down then move = move - Vector3.new(0, 1, 0) end
-
                 local newPos = c.CFrame.Position + move * freeCamSpeed * dt
                 c.CFrame = CFrame.new(newPos) * rot
             end)
@@ -1209,7 +1825,6 @@ makeToggle(generalTab, {
             freeCamInputConns = {}
             freeCamMove = {W=false, A=false, S=false, D=false, Up=false, Down=false}
             destroyFreeCamUI()
-
             local char = player.Character
             local hrp = char and char:FindFirstChild("HumanoidRootPart")
             local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -1227,33 +1842,18 @@ makeToggle(generalTab, {
         end
     end
 })
-
-makeSlider(generalTab, {
-    Title = "自由视角速度",
-    Min = 10, Max = 500, Default = 50,
-    Callback = function(v) safe(function() freeCamSpeed = v end) end,
-})
+makeSlider(generalTab, {Title = "自由视角速度", Min = 10, Max = 500, Default = 50, Callback = function(v) safe(function() freeCamSpeed = v end) end})
 
 -- ============ 准星显示 ============
 local crosshairGui = new("ScreenGui", {Name="CrosshairGui", ResetOnSpawn=false, IgnoreGuiInset=true, DisplayOrder=999, Parent=playerGui})
 local crosshairH = new("Frame", {Size=UDim2.fromOffset(20,2), Position=UDim2.new(0.5,-10,0.5,-1), BackgroundColor3=Color3.fromRGB(255,0,0), BorderSizePixel=0, Visible=false, Parent=crosshairGui}, {corner(1)})
 local crosshairV = new("Frame", {Size=UDim2.fromOffset(2,20), Position=UDim2.new(0.5,-1,0.5,-10), BackgroundColor3=Color3.fromRGB(255,0,0), BorderSizePixel=0, Visible=false, Parent=crosshairGui}, {corner(1)})
-makeToggle(generalTab, {
-    Title = "🎯 准星显示",
-    Value = false,
-    Callback = function(s)
-        safe(function()
-            crosshairH.Visible = s
-            crosshairV.Visible = s
-        end)
-    end,
-})
+makeToggle(generalTab, {Title = "🎯 准星显示", Value = false, Callback = function(s) safe(function() crosshairH.Visible = s; crosshairV.Visible = s end) end})
 
 -- ============ 自动跳跃 ============
 local autoJumpEnabled, autoJumpConn, autoJumpLastJump = false, nil, 0
 makeToggle(generalTab, {
-    Title = "🔄 自动跳跃",
-    Value = false,
+    Title = "🔄 自动跳跃", Value = false,
     Callback = function(s)
         safe(function()
             autoJumpEnabled = s
@@ -1271,10 +1871,7 @@ makeToggle(generalTab, {
                         local now = tick()
                         if now - autoJumpLastJump < 0.15 then return end
                         local state = h:GetState()
-                        local onGround = (state == Enum.HumanoidStateType.Running)
-                            or (state == Enum.HumanoidStateType.RunningNoPhysics)
-                            or (state == Enum.HumanoidStateType.Landed)
-                            or (h.FloorMaterial ~= Enum.Material.Air)
+                        local onGround = (state == Enum.HumanoidStateType.Running) or (state == Enum.HumanoidStateType.RunningNoPhysics) or (state == Enum.HumanoidStateType.Landed) or (h.FloorMaterial ~= Enum.Material.Air)
                         if onGround and hrp.AssemblyLinearVelocity.Y <= 1 then
                             h.Jump = true
                             h:ChangeState(Enum.HumanoidStateType.Jumping)
@@ -1660,3 +2257,219 @@ task.spawn(function()
 end)
 
 safe(function() tabs["内测人员"].button.MouseButton1Click:Fire() end)
+-- ============ UI 大小调节（防闪烁优化版） ============
+safe(function()
+    -- 给主窗口添加一个缩放组件
+    local uiScale = window:FindFirstChildOfClass("UIScale")
+    if not uiScale then
+        uiScale = Instance.new("UIScale")
+        uiScale.Parent = window
+    end
+
+    makeSlider(settingsTab, {
+        Title = "🔍 UI 界面缩放大小",
+        Min = 50,
+        Max = 150,
+        Default = 100,
+        Callback = function(v)
+            safe(function()
+                -- 直接通过 UIScale 缩放，不改窗口原本的 Size，绝对不会闪
+                uiScale.Scale = v / 100
+            end)
+        end
+    })
+
+    makeButton(settingsTab, {
+        Title = "🔄 恢复默认 UI 大小",
+        Callback = function()
+            safe(function()
+                uiScale.Scale = 1
+            end)
+        end
+    })
+end)
+-- ============ UI 大小与透明度（侧边栏修正版） ============
+safe(function()
+    local uiScale = window:FindFirstChildOfClass("UIScale")
+    if not uiScale then
+        uiScale = Instance.new("UIScale")
+        uiScale.Parent = window
+    end
+
+    makeSlider(settingsTab, {
+        Title = "🔍 UI 缩放大小", Min = 50, Max = 150, Default = 100,
+        Callback = function(v) safe(function() uiScale.Scale = v / 100 end) end
+    })
+
+    makeSlider(settingsTab, {
+        Title = "👻 UI 透明度", Min = 0, Max = 90, Default = 0,
+        Callback = function(v) safe(function()
+            local t = v / 100
+            window.BackgroundTransparency = t
+            
+            -- 遍历主窗口下所有的 UI 元素
+            for _, c in ipairs(window:GetDescendants()) do
+                -- 如果是侧边栏、标签按钮、纯色卡片，或者任何 Frame 和 TextButton
+                if c:IsA("Frame") or c:IsA("TextButton") or c:IsA("ScrollingFrame") then
+                    -- 只要不是全透明的（比如弹窗的点击热区），全部变透明
+                    if c.BackgroundTransparency < 1 then
+                        c.BackgroundTransparency = t
+                    end
+                end
+            end
+        end) end
+    })
+
+    makeButton(settingsTab, {Title="🔄 恢复默认", Callback=function() safe(function()
+        uiScale.Scale = 1
+        window.BackgroundTransparency = 0
+        for _, c in ipairs(window:GetDescendants()) do
+            if c:IsA("Frame") or c:IsA("TextButton") or c:IsA("ScrollingFrame") then
+                -- 恢复原本不透明的底色
+                if c.BackgroundTransparency ~= 1 then
+                    c.BackgroundTransparency = 0
+                end
+            end
+        end
+    end) end})
+end)
+-- ============ UI 维度模式（2D屏幕 / 3D世界 + 位置选择） ============
+safe(function()
+    local is3DMode = false
+    local followConn = nil
+    local currentPart = nil
+    local isFollowing = false
+
+    -- 位置选择下拉框
+    makeDropdown(settingsTab, {
+        Title = "📍 3D 面板位置",
+        Options = {"固定在原地", "跟随玩家视角"},
+        Value = "固定在原地",
+        Callback = function(opt)
+            safe(function()
+                isFollowing = (opt == "跟随玩家视角")
+                
+                -- 如果当前已经是 3D 模式，立刻应用位置变化
+                if is3DMode and currentPart then
+                    if isFollowing then
+                        -- 如果切到跟随，先清理原有的固定状态，启动跟随循环
+                        if followConn then followConn:Disconnect() end
+                        followConn = RunService.RenderStepped:Connect(function()
+                            safe(function()
+                                local cam = workspace.CurrentCamera
+                                if cam and currentPart then
+                                    currentPart.CFrame = cam.CFrame * CFrame.new(0, 0, -10)
+                                end
+                            end)
+                        end)
+                    else
+                        -- 如果切回固定，停止跟随，原地不动
+                        if followConn then followConn:Disconnect() followConn = nil end
+                    end
+                end
+            end)
+        end
+    })
+
+    -- 维度切换下拉框
+    makeDropdown(settingsTab, {
+        Title = "🌐 UI 维度模式",
+        Options = {"2D（屏幕固定）", "3D（游戏内悬浮）"},
+        Value = "2D（屏幕固定）",
+        Callback = function(opt)
+            safe(function()
+                if opt == "3D（游戏内悬浮）" then
+                    if is3DMode then return end
+                    is3DMode = true
+                    task.wait(0.1) 
+                    
+                    window.Parent = nil 
+                    
+                    currentPart = Instance.new("Part")
+                    currentPart.Name = "Local3DUI"
+                    currentPart.Size = Vector3.new(5.5, 4, 0.1) 
+                    currentPart.Anchored = true
+                    currentPart.CanCollide = false
+                    currentPart.Transparency = 1
+                    currentPart.Parent = workspace
+
+                    local surface = Instance.new("SurfaceGui")
+                    surface.Face = Enum.NormalId.Front
+                    surface.CanvasSize = Vector2.new(460, 340) 
+                    surface.AlwaysOnTop = true
+                    surface.Parent = currentPart
+                    
+                    window.Parent = surface
+                    window.Size = UDim2.fromScale(1, 1)
+                    window.Position = UDim2.fromScale(0, 0)
+                    window.Visible = true
+                    
+                    local cam = workspace.CurrentCamera
+                    if cam then
+                        currentPart.CFrame = cam.CFrame * CFrame.new(0, 0, -10)
+                    end
+                    
+                    -- 初始化位置模式
+                    if isFollowing then
+                        if followConn then followConn:Disconnect() end
+                        followConn = RunService.RenderStepped:Connect(function()
+                            safe(function()
+                                local c = workspace.CurrentCamera
+                                if c and currentPart then
+                                    currentPart.CFrame = c.CFrame * CFrame.new(0, 0, -10)
+                                end
+                            end)
+                        end)
+                    else
+                        -- 固定模式：瞬间转头看你
+                        if cam then
+                            cam.CameraType = Enum.CameraType.Scriptable
+                            cam.CFrame = CFrame.new(currentPart.Position + currentPart.CFrame.LookVector * 8, currentPart.Position)
+                            task.delay(0.5, function()
+                                safe(function()
+                                    local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+                                    if hum then
+                                        cam.CameraType = Enum.CameraType.Custom
+                                        cam.CameraSubject = hum
+                                    end
+                                end)
+                            end)
+                        end
+                    end
+                    
+                    local oldClose = closeBtn.MouseButton1Click
+                    closeBtn.MouseButton1Click:Connect(function()
+                        currentPart.Visible = false
+                    end)
+
+                    openBtn.MouseButton1Click:Connect(function()
+                        if currentPart then
+                            currentPart.Visible = not currentPart.Visible
+                        end
+                    end)
+
+                else
+                    is3DMode = false
+                    if followConn then followConn:Disconnect() followConn = nil end
+                    
+                    local part = workspace:FindFirstChild("Local3DUI")
+                    if part then
+                        window.Parent = gui 
+                        window.Size = UDim2.fromOffset(460, 340)
+                        window.Position = UDim2.new(0.5, -230, 0.5, -170)
+                        part:Destroy()
+                    end
+                    
+                    safe(function()
+                        local cam = workspace.CurrentCamera
+                        local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+                        if cam and hum then
+                            cam.CameraType = Enum.CameraType.Custom
+                            cam.CameraSubject = hum
+                        end
+                    end)
+                end
+            end)
+        end
+    })
+end)
