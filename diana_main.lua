@@ -13,6 +13,139 @@ local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
+-- =========================================================
+-- 🖼️ 免责声明弹窗（在脚本加载前强制阻断）
+-- =========================================================
+local allowedToLoad = false
+local popupGui = Instance.new("ScreenGui")
+popupGui.Name = "AutoImagePopupUI"
+popupGui.ResetOnSpawn = false
+popupGui.IgnoreGuiInset = true
+popupGui.DisplayOrder = 999999 
+popupGui.Parent = playerGui
+
+local bgBtn = Instance.new("TextButton")
+bgBtn.Size = UDim2.new(1, 0, 1, 0)
+bgBtn.BackgroundColor3 = Color3.new(0, 0, 0)
+bgBtn.BackgroundTransparency = 0.3
+bgBtn.Text = ""
+bgBtn.AutoButtonColor = false
+bgBtn.ZIndex = 1
+bgBtn.Parent = popupGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 350, 0, 350)
+frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+frame.ZIndex = 2
+frame.Parent = bgBtn
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = frame
+
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(0, 140, 255)
+stroke.Thickness = 2
+stroke.Parent = frame
+
+local img = Instance.new("ImageLabel")
+img.Size = UDim2.new(1, -10, 1, -80) -- 留出下面文字的空间
+img.Position = UDim2.new(0.5, 0, 0, 5)
+img.AnchorPoint = Vector2.new(0.5, 0)
+img.BackgroundTransparency = 1
+img.Image = "rbxassetid://120477606610755" -- 你的图片ID
+img.ScaleType = Enum.ScaleType.Fit
+img.ZIndex = 3
+img.Parent = frame
+
+local imgCorner = Instance.new("UICorner")
+imgCorner.CornerRadius = UDim.new(0, 8)
+imgCorner.Parent = img
+
+-- 警告文字
+local warnText = Instance.new("TextLabel")
+warnText.Size = UDim2.new(1, -20, 0, 30)
+warnText.Position = UDim2.new(0.5, 0, 1, -70)
+warnText.AnchorPoint = Vector2.new(0.5, 0)
+warnText.BackgroundTransparency = 1
+warnText.Text = "如果用此脚本有任何封号问题，是否自己承担？"
+warnText.TextColor3 = Color3.fromRGB(220, 80, 80)
+warnText.Font = Enum.Font.GothamBold
+warnText.TextSize = 12
+warnText.TextWrapped = true
+warnText.ZIndex = 4
+warnText.Parent = frame
+
+-- 按钮容器
+local btnContainer = Instance.new("Frame")
+btnContainer.Size = UDim2.new(1, -40, 0, 30)
+btnContainer.Position = UDim2.new(0.5, 0, 1, -35)
+btnContainer.AnchorPoint = Vector2.new(0.5, 0)
+btnContainer.BackgroundTransparency = 1
+btnContainer.ZIndex = 4
+btnContainer.Parent = frame
+
+local btnLayout = Instance.new("UIListLayout")
+btnLayout.FillDirection = Enum.FillDirection.Horizontal
+btnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+btnLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+btnLayout.Padding = UDim.new(0, 15)
+btnLayout.Parent = btnContainer
+
+local btnYes = Instance.new("TextButton")
+btnYes.Size = UDim2.new(0, 100, 1, 0)
+btnYes.BackgroundColor3 = Color3.fromRGB(0, 140, 255)
+btnYes.Text = "1 是"
+btnYes.TextColor3 = Color3.new(1,1,1)
+btnYes.Font = Enum.Font.GothamBold
+btnYes.TextSize = 13
+btnYes.AutoButtonColor = false
+btnYes.ZIndex = 5
+btnYes.Parent = btnContainer
+local yesCorner = Instance.new("UICorner")
+yesCorner.CornerRadius = UDim.new(0, 6)
+yesCorner.Parent = btnYes
+
+local btnNo = Instance.new("TextButton")
+btnNo.Size = UDim2.new(0, 100, 1, 0)
+btnNo.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+btnNo.Text = "2 否"
+btnNo.TextColor3 = Color3.fromRGB(220, 80, 80)
+btnNo.Font = Enum.Font.GothamBold
+btnNo.TextSize = 13
+btnNo.AutoButtonColor = false
+btnNo.ZIndex = 5
+btnNo.Parent = btnContainer
+local noCorner = Instance.new("UICorner")
+noCorner.CornerRadius = UDim.new(0, 6)
+noCorner.Parent = btnNo
+
+-- 交互逻辑
+local loadTrigger = Instance.new("BindableEvent")
+
+btnYes.MouseButton1Click:Connect(function()
+    popupGui:Destroy() -- 关闭弹窗
+    loadTrigger:Fire() -- 触发加载信号
+end)
+
+btnNo.MouseButton1Click:Connect(function()
+    popupGui:Destroy() -- 直接关闭，后面代码全都不会执行
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "已取消",
+        Text = "脚本已停止加载",
+        Duration = 3
+    })
+end)
+
+-- 阻塞等待：如果没点“是”，代码就会永远卡在这里不往下走
+loadTrigger.Event:Wait()
+
+-- =========================================================
+-- 以下为原脚本核心逻辑（只有点击了“是”才会执行到这里）
+-- =========================================================
+
 local function safe(fn, ...)
     local ok, res = pcall(fn, ...)
     if ok then return res end
@@ -114,12 +247,11 @@ registerThemeTarget(titleAccent, "fill")
 local closeBtn = new("TextButton", {Size=UDim2.fromOffset(26,26), Position=UDim2.new(1,-34,0.5,-13), BackgroundColor3=SOFT_BG, Text="X", TextColor3=PRIMARY, Font=Enum.Font.GothamBold, TextSize=13, AutoButtonColor=false, ZIndex=3, Parent=topBar}, {corner(6), stroke(PRIMARY, 1, 0.6)})
 registerThemeTarget(closeBtn, "text")
 
--- ============ 玩家卡片（移到了顶部） ============
 local playerCard = new("TextButton", {
     Name="PlayerCard",
-    Size=UDim2.new(1, -125, 0, 36), -- 宽度自适应
-    Position=UDim2.new(0, 80, 0, 0), -- 放在标题后面
-    BackgroundTransparency=1, -- 去掉白底，融入顶部栏
+    Size=UDim2.new(1, -125, 0, 36),
+    Position=UDim2.new(0, 80, 0, 0),
+    BackgroundTransparency=1,
     Text="", AutoButtonColor=false, ZIndex=10, Parent=topBar
 })
 local avatar = new("ImageLabel", {
@@ -151,7 +283,6 @@ playerCard.MouseButton1Click:Connect(function()
         task.delay(1.5, function() safe(function() pTag.Text = "@"..player.Name end) end)
     end)
 end)
--- =================================================
 
 local sidebar = new("ScrollingFrame", {
     Size=UDim2.new(0,110,1,-76), Position=UDim2.new(0,0,0,76),
@@ -377,7 +508,6 @@ end)
 -- ============ 🧪 内测人员 Tab ============
 local betaTab = createTab("内测人员", "🧪")
 
--- 【脚本作者】区域
 new("TextLabel", {
     Size = UDim2.new(1,0,0,20),
     BackgroundTransparency = 1,
@@ -396,7 +526,7 @@ local authorCard = new("Frame", {
     BorderSizePixel = 0,
     LayoutOrder = nextOrder(),
     Parent = betaTab,
-}, {corner(10), stroke(PRIMARY, 1.5, 0.4), padding(10)}) -- 边框稍微加粗
+}, {corner(10), stroke(PRIMARY, 1.5, 0.4), padding(10)}) 
 
 local authorAvatarFrame = new("Frame", {
     Size = UDim2.fromOffset(50, 50),
@@ -405,7 +535,6 @@ local authorAvatarFrame = new("Frame", {
     Parent = authorCard,
 }, {corner(999), stroke(PRIMARY, 1, 0.5)})
 
--- 作者头像（填入你提供的 ID）
 local authorAvatar = new("ImageLabel", {
     Size = UDim2.fromScale(1, 1),
     BackgroundTransparency = 1,
@@ -422,7 +551,7 @@ new("TextLabel", {
     Text = "作者",
     TextColor3 = PRIMARY,
     Font = Enum.Font.GothamBold,
-    TextSize = 13, -- 字体稍微加大
+    TextSize = 13, 
     TextXAlignment = Enum.TextXAlignment.Left,
     Parent = authorCard,
 })
@@ -443,7 +572,7 @@ new("TextLabel", {
     Size = UDim2.new(1, -190, 0, 16),
     Position = UDim2.fromOffset(60, 36),
     BackgroundTransparency = 1,
-    Text = "快手号: 5733022742", -- 更新了这里的文字显示
+    Text = "快手号: 5733022742", 
     TextColor3 = TEXT_DIM,
     Font = Enum.Font.GothamMedium,
     TextSize = 10,
@@ -466,7 +595,7 @@ local copyAuthorKs = new("TextButton", {
 copyAuthorKs.MouseButton1Click:Connect(function()
     safe(function()
         if setclipboard then
-            setclipboard("5733022742") -- 点击后复制的内容
+            setclipboard("5733022742")
             copyAuthorKs.Text = "已复制!"
             task.delay(1.5, function()
                 safe(function() copyAuthorKs.Text = "复制快手" end)
@@ -475,8 +604,6 @@ copyAuthorKs.MouseButton1Click:Connect(function()
     end)
 end)
 
-
--- 【内测人员】区域
 new("TextLabel", {
     Size = UDim2.new(1,0,0,20),
     BackgroundTransparency = 1,
@@ -496,7 +623,6 @@ local betaMembers = {
         contact = "快手号：5721155297",
         copyText = "5721155297",
         qq = "2580525466",
-        -- 这里填入你后台的 ID（注意，如果它是贴花ID且加载不出来，需要换成真正的图片ID）
         avatar = "rbxassetid://112961077620856",  
     },
 }
@@ -510,11 +636,10 @@ for _, member in ipairs(betaMembers) do
         Parent = betaTab,
     }, {corner(10), stroke(PRIMARY, 1, 0.7), padding(10)})
 
-    -- ============ 强制加载图片模式 ============
     local avatarFrame = new("Frame", {
         Size = UDim2.fromOffset(50, 50),
         Position = UDim2.new(0, 0, 0.5, -25),
-        BackgroundColor3 = SOFT_BG, -- 如果图片没加载出来，这里是灰色底，不是丑丑的白底
+        BackgroundColor3 = SOFT_BG, 
         Parent = card,
     }, {corner(999), stroke(PRIMARY, 1, 0.5)})
 
@@ -526,7 +651,6 @@ for _, member in ipairs(betaMembers) do
         Visible = true,
         Parent = avatarFrame,
     }, {corner(999)})
-    -- =========================================
 
     new("TextLabel", {
         Size = UDim2.new(1, -190, 0, 16),
@@ -564,9 +688,6 @@ for _, member in ipairs(betaMembers) do
         Parent = card,
     })
 
-    -- ============ 右侧两个复制按钮 ============
-    
-    -- 复制快手
     local copyKsBtn = new("TextButton", {
         Size = UDim2.fromOffset(60, 22),
         Position = UDim2.new(1, -60, 0.5, 4),
@@ -579,7 +700,6 @@ for _, member in ipairs(betaMembers) do
         Parent = card,
     }, {corner(6), stroke(PRIMARY, 1, 0.4)})
 
-    -- 复制 QQ
     local copyQQBtn = new("TextButton", {
         Size = UDim2.fromOffset(60, 22),
         Position = UDim2.new(1, -60, 0.5, -26),
@@ -592,7 +712,6 @@ for _, member in ipairs(betaMembers) do
         Parent = card,
     }, {corner(6), stroke(PRIMARY, 1, 0.4)})
 
-    -- 按钮动画与点击逻辑
     for _, btn in ipairs({copyKsBtn, copyQQBtn}) do
         btn.MouseEnter:Connect(function()
             safe(function()
@@ -716,6 +835,8 @@ makeButton(homeTab, {Title="退出服务器", Callback=function() safe(function(
 
 -- ============ 通用 Tab ============
 local generalTab = createTab("通用", "⚙")
+
+-- 原有通用功能
 local spinEnabled, spinValue, spinConn = false, 40, nil
 local function getHum()
     local char = player.Character
@@ -807,6 +928,76 @@ end) end})
 makeButton(generalTab, {Title="神飞行", Callback=function() safe(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/luauser729/bbb/main/shen.lua"))() end) end})
 makeButton(generalTab, {Title="触碰甩飞", Callback=function() safe(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/luauser729/roblox-scri/main/123"))() end) end})
 makeButton(generalTab, {Title="🚗 坐标飞车", Callback=function() safe(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/luauser729/roblox-1/main/6"))() end) end})
+
+-- ========= 移到了最下面的：夜视 和 除雾 =========
+local nightVisionEnabled = false
+local nvBrightness = nil
+local nvOutdoorAmbient = nil
+local nvClockTime = nil
+
+makeToggle(generalTab, {
+    Title = "🌙 夜视",
+    Value = false,
+    Callback = function(s)
+        safe(function()
+            nightVisionEnabled = s
+            if nightVisionEnabled then
+                nvBrightness = nvBrightness or Lighting.Brightness
+                nvOutdoorAmbient = nvOutdoorAmbient or Lighting.OutdoorAmbient
+                nvClockTime = nvClockTime or Lighting.ClockTime
+                
+                Lighting.Brightness = 3
+                Lighting.OutdoorAmbient = Color3.fromRGB(180, 180, 180)
+                Lighting.ClockTime = 12
+                Lighting.GlobalShadows = false
+            else
+                Lighting.Brightness = nvBrightness or 1
+                Lighting.OutdoorAmbient = nvOutdoorAmbient or Color3.fromRGB(128, 128, 128)
+                Lighting.ClockTime = nvClockTime or 14
+                Lighting.GlobalShadows = true
+                nvBrightness, nvOutdoorAmbient, nvClockTime = nil, nil, nil
+            end
+        end)
+    end
+})
+
+local noFogEnabled = false
+local origFogStart, origFogEnd = nil, nil
+local fogConn = nil
+
+makeToggle(generalTab, {
+    Title = "🌫️ 除雾",
+    Value = false,
+    Callback = function(s)
+        safe(function()
+            noFogEnabled = s
+            if noFogEnabled then
+                origFogStart = origFogStart or Lighting.FogStart
+                origFogEnd = origFogEnd or Lighting.FogEnd
+                
+                if fogConn then fogConn:Disconnect() end
+                fogConn = RunService.Heartbeat:Connect(function()
+                    safe(function()
+                        if noFogEnabled then
+                            Lighting.FogEnd = 100000
+                            Lighting.FogStart = 100000
+                            for _, v in pairs(Lighting:GetChildren()) do
+                                if v:IsA("Atmosphere") then v.Density = 0 end
+                                if v:IsA("SunRaysEffect") then v.Intensity = 0 end
+                                if v:IsA("BlurEffect") then v.Size = 0 end
+                            end
+                        end
+                    end)
+                end)
+            else
+                if fogConn then fogConn:Disconnect() fogConn = nil end
+                if origFogStart then Lighting.FogStart = origFogStart end
+                if origFogEnd then Lighting.FogEnd = origFogEnd end
+                origFogStart, origFogEnd = nil, nil
+            end
+        end)
+    end
+})
 
 -- ============ ESP ============
 local espEnabled, espConn, espCache, espCleanConn = false, nil, {}, nil
@@ -900,8 +1091,7 @@ local freeCamMove = {W=false, A=false, S=false, D=false, Up=false, Down=false}
 local freeCamGui = nil
 
 local function destroyFreeCamUI()
-    if freeCamGui and freeCamGui.Parent then freeCamGui:Destroy() end
-    freeCamGui = nil
+    if freeCamGui and freeCamGui.Parent then freeCamGui:Destroy() end    freeCamGui = nil
 end
 
 local function createFreeCamUI()
